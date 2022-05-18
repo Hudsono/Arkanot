@@ -27,23 +27,31 @@
 #define RAYGUI_IMPLEMENTATION
 #define RAYGUI_SUPPORT_ICONS
 
+#define SCREEN_WIDTH	1280
+#define SCREEN_HEIGHT	720
+
 
 //#include "raygui.h"
 
 #include <sstream>
 #include <string.h>
+#include <stdlib.h>	//math absolute (abs)
 
 #include "GameObject.h"
 #include "Paddle.h"
 #include "Ball.h"
+#include "Brick.h"
 #include "Stopwatch.h"
 
-#define MAX_BALLS 10
+
 
 class Game
 {
 public:
+	//Constructor
 	Game();
+	//Destructor
+	~Game();
 
 	//basic recipe for a real-time game
 
@@ -62,17 +70,25 @@ public:
 
 
 
-	Paddle* _paddle;
-	Ball* _ball;
+	Paddle* _paddle;				//Points to the main player paddle. Might be more later on for multiplayer... (i.e. convert to vector)
+	static Rectangle _boundary;		//Boundary of the play area that entities are confined to.
+	Vector2 _borderPadding;			//The amount of X, Y padding from the game window and the boundary
+	//float _boundRight;
+	//float _boundBottom;
 
-	Ball* _ballList[MAX_BALLS];
-	static int _numBalls;	//TODO: Last here. Want to keep track of the number of balls in the scene so we can loop through and update
-							//them in Game.cpp. Want to use this formula for multiple bricks, bullets, etc. as well...
 
-	~Game();
+	static bool _debugMode;	//showing debug graphics; boundaries; vectors; on screen displays; etc.
+
+	void DoPhysics();	//Compute ball-ball, ball-paddle, ball-brick, ball-enemy, ball-powerup, etc physics
+	int PhysCircleRect(GameObject* rect, GameObject* circ);	//Return > 0 if the rectangle and circle interset, and where on the rectangle via 1-4; 0 = no collision.
+	void LoadLevel(int level);	//Load graphics of a level, its bricks, etc.
+
+	char _level[20][13];	//y,x or columns/rows of the current level
+
+
 
 protected:
-
+	//Timer variables.
 	long currentTime;
 	long lastTime;
 	float timer;
@@ -87,6 +103,7 @@ protected:
 	int screenWidth;
 	int screenHeight;
 
+	//Points representing the middle of the screen
 	int screenMidX;
 	int screenMidY;
 };
