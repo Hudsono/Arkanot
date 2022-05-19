@@ -6,7 +6,7 @@ using namespace std;
 
 Rectangle* GameObject::_boundaryPtr;
 
-GameObject::GameObject(Vector2 spawn)
+GameObject::GameObject(Vector2 spawn, const char* textureFile)
 {
 	//initially set game object's position to the defined spawn location
 	_pos = spawn;
@@ -22,10 +22,13 @@ GameObject::GameObject(Vector2 spawn)
 	_scale = { 1, 1 };
 	_angleDeg = 0;
 
-	_image = LoadImage("../resources/none.png");
-	_sprite = LoadTextureFromImage(_image);
+	//_image = LoadImage("../resources/none.png");	//default checkerboard texture
+	//_image = Helper::LoadImageOp(FILE_PATH + "none.png"));
+	Helper::LoadSprite(textureFile, _sprite);
 
-	_size = { (float)_image.width * _scale.x, (float)_image.height * _scale.y };
+	//_sprite = LoadTextureFromImage(_image);
+
+	_size = { (float)_sprite.image.width * _scale.x, (float)_sprite.image.height * _scale.y };
 
 
 
@@ -54,7 +57,7 @@ GameObject::~GameObject()
 
 Vector2 GameObject::Size()
 {
-	return Vector2 { (float)GameObject::_image.width * (float)GameObject::_scale.x, (float)GameObject::_image.height * (float)GameObject::_scale.y };
+	return Vector2 { (float)GameObject::_sprite.image.width * (float)GameObject::_scale.x, (float)GameObject::_sprite.image.height * (float)GameObject::_scale.y };
 }
 
 void GameObject::Update(float deltaTime)
@@ -68,39 +71,41 @@ void GameObject::Render()
 
 	//If specified, automatically set the offset to the centre of the image.
 	if (GameObject::_centreSprite)
-		GameObject::_spriteOffset = { -((float)GameObject::_image.width / 2), -((float)GameObject::_image.height / 2) };
+		GameObject::_spriteOffset = { -((float)GameObject::_sprite.image.width / 2), -((float)GameObject::_sprite.image.height / 2) };
 
 	//Render the texture at the game object's position, offset by any sprite offset specified.
 	//DrawTextureEx(GameObject::_sprite, Vector2 { GameObject::_pos.x + GameObject::_spriteOffset.x, GameObject::_pos.y + GameObject::_spriteOffset.y }, GameObject::_angleDeg, 1, GameObject::_colour);
 	DrawTexturePro
 	(
-		GameObject::_sprite, 
+		GameObject::_sprite.texture, 
 		Rectangle
 		{ 
 			0, 
 			0, 
-			(float)GameObject::_image.width, 
-			(float)GameObject::_image.height 
+			(float)GameObject::_sprite.image.width, 
+			(float)GameObject::_sprite.image.height 
 		},
 		Rectangle
 		{ 
 			GameObject::_pos.x, 
 			GameObject::_pos.y, 
-			GameObject::_image.width * GameObject::_scale.x, 
-			GameObject::_image.height * GameObject::_scale.y 
+			GameObject::_sprite.image.width * GameObject::_scale.x, 
+			GameObject::_sprite.image.height * GameObject::_scale.y 
 		},
 		Vector2 { -GameObject::_spriteOffset.x, -GameObject::_spriteOffset.y },
 		GameObject::_angleDeg, 
 		GameObject::_colour
 	);
 
-	//If we're in debug mode, draw the sprite's origin/hot spot as a red dot, and the sprite's bounds as a black rectangle
+	//Render debugging graphics if debugging is enabled
 	if (Game::_debugMode)
-	{
-		DrawCircle(GameObject::_pos.x, GameObject::_pos.y, 2, RED);
-		DrawRectangleLines(GameObject::_pos.x, GameObject::_pos.y, GameObject::Size().x, GameObject::Size().y, BLACK);
-	}
+		RenderDebug();
 
+}
+
+void GameObject::RenderDebug()
+{
+	DrawCircle(GameObject::_pos.x, GameObject::_pos.y, 2, RED);	//Draw origin/hotspot as a red dot
 }
 
 void GameObject::SetPos(Vector2 pos)

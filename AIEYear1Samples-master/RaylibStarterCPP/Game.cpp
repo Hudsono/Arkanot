@@ -2,12 +2,16 @@
 
 using namespace std;
 
+//Declare static variables to keep the linker happy
 bool Game::_debugMode;
 Rectangle Game::_boundary;
+bool Game::_paused;
 
 Game::Game()
 {
     Game::_debugMode = false;
+    Game::_paused = false;
+
     cout << "New game!" << endl;
 }
 
@@ -52,13 +56,30 @@ void Game::Init()
     GameObject::_boundaryPtr = &Game::_boundary;
 
 
-    _debugMode = 1;
+    _debugMode = true;
 
     LoadLevel(0);
 }
 
 void Game::Update()
 {
+    ////////////////////////////////////////////
+    //Update logic NOT SUBJECT to game pausing//
+    ////////////////////////////////////////////
+
+    //Toggle debug view
+    if (IsKeyPressed(KEY_B))
+    {
+        _debugMode = !_debugMode;
+    }
+
+    //Pause the game
+    if (IsKeyPressed(KEY_P))
+    {
+        cout << "PAUSE TOGGLE" << endl;
+        //_paused = !_paused;
+    }
+
     //Frame timer updates
     lastTime = currentTime;
     currentTime = stopWatch.ElapsedTime();
@@ -82,57 +103,86 @@ void Game::Update()
     cout << endl;
     */
 
-    //Move the paddle
-    //Left
-    if (IsKeyDown(KEY_A))
-        _paddle->MoveLeft();
+    ////////////////////////////////////////
+    //Update logic SUBJECT to game pausing//
+    ////////////////////////////////////////
 
-    //Right
-    if (IsKeyDown(KEY_D))
-        _paddle->MoveRight();
-
-    //Fire balls/lasers/etc.
-    if (IsKeyPressed(KEY_SPACE))
-        _paddle->Fire();
-
-    //Toggle debug view
-    if (IsKeyPressed(KEY_B))
+    if (!_paused)
     {
-       _debugMode = !_debugMode;
-    }
+        //Move the paddle
+        //Left
+        if (IsKeyDown(KEY_A))
+            _paddle->MoveLeft();
 
-    //Debug: toggle Catch
-    if (IsKeyPressed(KEY_R))
-    {
-        if (_paddle->_paddleState == Paddle::PaddleState::Catch) {
-            _paddle->_paddleState = Paddle::PaddleState::Normal;
-            cout << "Catch Off" << endl;
-        }
-        else
+        //Right
+        if (IsKeyDown(KEY_D))
+            _paddle->MoveRight();
+
+        //Fire balls/lasers/etc.
+        if (IsKeyPressed(KEY_SPACE))
+            _paddle->Fire();
+
+        //Debug: toggle Catch
+        if (IsKeyPressed(KEY_R))
         {
-            _paddle->_paddleState = Paddle::PaddleState::Catch;
-            cout << "Catch ON" << endl;
+            if (_paddle->_paddleState == Paddle::PaddleState::Catch) {
+                _paddle->_paddleState = Paddle::PaddleState::Normal;
+                cout << "Catch Off" << endl;
+            }
+            else
+            {
+                _paddle->_paddleState = Paddle::PaddleState::Catch;
+                cout << "Catch ON" << endl;
+            }
         }
+
+        //Debug: disruption powerup
+        if (IsKeyPressed(KEY_Q))
+        {
+            //Have to save the vector size beforehand otherwise the size changes every time a new ball is added; infinite loop
+            int savedSize = Ball::_ballList.size();
+
+            cout << "===DISRUPT ATTEMPT===" << endl;
+
+            for (int i = 0; i < savedSize; i++)
+            {
+                Ball::_ballList[i]->Disrupt();
+            }
+
+            cout << "===DISRUPT END===" << endl << endl;
+        }
+
+        //Debug: breaking things on purpose (trying to)
+        if (IsKeyPressed(KEY_X))
+        {
+            //Have to save the vector size beforehand otherwise the size changes every time a new ball is added; infinite loop
+            int savedSize = Brick::_brickList.size();
+
+            for (int i = 0; i < savedSize; i++)
+            {
+                new Brick({Brick::_brickList[i]->_pos}, 'r');
+            }
+        }
+
+        //Debug: spawn ball above paddle
+        if (IsKeyPressed(KEY_E))
+        {
+            new Ball(Vector2{ _paddle->_pos.x + _paddle->Size().x / 2, _paddle->_pos.y - _paddle->Size().y }, Vector2{ 0.7, -0.7 });
+        }
+
+
+        //Update paddle logic
+        _paddle->Update(deltaTime);
+
+        //Update all balls' logic
+        for (int i = 0; i < Ball::_ballList.size(); i++)
+        {
+            Ball::_ballList[i]->Update(deltaTime);
+        }
+
+        //Calculate entity physics for the whole game.
+        DoPhysics();
     }
-
-    //Debug: spawn ball above paddle
-    if (IsKeyPressed(KEY_E))
-    {
-        new Ball(Vector2{ _paddle->_pos.x + _paddle->Size().x / 2, _paddle->_pos.y - _paddle->Size().y * 2 });
-    }
-
-
-    //Update paddle logic
-    _paddle->Update(deltaTime);
-
-    //Update all balls' logic
-    for (int i = 0; i < Ball::_ballList.size(); i++)
-    {
-        Ball::_ballList[i]->Update(deltaTime);
-    }
-
-    //Calculate entity physics for the whole game.
-    DoPhysics();
 }
 
 void Game::Draw()
@@ -192,11 +242,11 @@ int Game::DeInit()
 //Game border collision is done on the ball object's update routine.
 void Game::DoPhysics()
 {
-    //Check every ball against every other ball bar balls stuck to the paddle
+    //Check every ball against every other ball, bar balls stuck to the paddle
     for (int i = 0; i < Ball::_ballList.size(); i++) if (Ball::_ballList[i]->_stuckPaddle == nullptr)
     {
         Ball* ball1 = Ball::_ballList[i];
-        for (int j = i + 1; j < Ball::_ballList.size(); j++) if (Ball::_ballList[j]->_stuckPaddle == nullptr)
+        for (int j = i + 1; j < Ball::_ballList.size(); j++) if (Ball::_ballList[j]->_stuckPaddle == nullptr && Helper::isNaNVector(Ball::_ballList[j]->_prevPos))
         {
             Ball* ball2 = Ball::_ballList[j];
 
@@ -204,7 +254,7 @@ void Game::DoPhysics()
 
             //get the magnitude^2 of ball positions against squared combinations of both balls' radii
             //avoids square root calculations
-            bool collided = Helper::Dot(ballDelta, ballDelta) <= ((ball1->_size + ball2->_size) * (ball1->_size + ball2->_size));
+            bool collided = Helper::Dot(ballDelta, ballDelta) <= ((ball1->_radius + ball2->_radius) * (ball1->_radius + ball2->_radius));
 
             if (collided && (ball1->_ballID != ball2->_ballID))  //don't check against itself
             {
@@ -286,7 +336,7 @@ void Game::DoPhysics()
         //determine if the ball collided with the paddle
         //get the magnitude^2 of ball positions against squared combinations of both balls' radii
         //avoids square root calculations
-        bool paddleCollided = Helper::Dot(paddleBallDelta, paddleBallDelta) <= ((ball1->_size) * (ball1->_size));
+        bool paddleCollided = Helper::Dot(paddleBallDelta, paddleBallDelta) <= ((ball1->_radius) * (ball1->_radius));
 
         //determine which face the ball touched the paddle
         bool touchU = (ball1->_pos.y < _paddle->_pos.y);
@@ -308,8 +358,8 @@ void Game::DoPhysics()
             //cout << touchR << endl;
             //cout << "--------" << endl;
 
-            //make one axis win!
-            //We only want one axis to respond
+            // Make one axis win!
+            // We only want one axis to respond, otherwise collision resolution makes no sense
             if ((touchU || touchD) && (touchL || touchR))
             {
                 //if there's a bigger difference on the X axis, then choose to report X axis collision
@@ -326,26 +376,23 @@ void Game::DoPhysics()
                 }
             }
 
-            if (touchU || touchD)
+            //If the ball touches the top of the paddle, execute some gameplay logic to keep the ball's direction predictable and controllable,
+            //but allso varied.
+            if (touchU)
             {
+                ball1->_direction.y = -abs(ball1->_direction.y);    //Set ball's Y direction to point up
+
+                //Reflection (below) proved difficult when colliders were inside each-other (i.e. it would reflect back-and-forth over and over)
+                //ball1->_direction.y *= -1;
+
                 //calculate how much X direction bias based on how close the ball is to the centre of the paddle
                 float sharpness = -((_paddle->_pos.x + (_paddle->Size().x / 2)) - ball1->_pos.x) / (_paddle->Size().x / 2);
 
-                //reflect ball's Y direction to bounce it back--usually, bounce it upwards
-                ball1->_direction.y *= -1;
-
                 //if on the right, also reflect the X direction
                 if (rightHalf)
-                {
                     ball1->_direction.x = sharpness;
-                }
                 else
-                {
                     ball1->_direction.x += sharpness;
-                }
-
-                //cout << sharpness << endl;
-                //add sharpness to ball's X direction
 
                 //normalise direction
                 // Actually, in Arkanoid, it doesn't look like the direction is normalised on purpose
@@ -353,27 +400,39 @@ void Game::DoPhysics()
                 // AKA varied gameplay and controlled skill.
                 //Helper::Normalise(ball1->_direction);
 
-                //Make sure the ball's vertical direction doesn't become too shallow
-                //Otherwise, the ball can get stuck in the level without much player input
-                //Arkanoid also seems to impose this limit
+                // Make sure the ball's vertical direction doesn't become too shallow
+                // Otherwise, the ball can get stuck in the level without much player input
+                // Arkanoid also seems to impose this limit
 
-                //If the Y direction is in the exclusive range -0.5 to 0.5, the ball is moving too slow on the Y axis
-                //So, clamp the Y direction outside of this range (inclusive)
-                if (ball1->_direction.y > -0.5f && ball1->_direction.y < 0)
+                // If the Y direction is in the exclusive range -0.5 to 0.5, the ball is moving too slow on the Y axis
+                // So, clamp the Y direction outside of this range (inclusive)
+                if (ball1->_direction.y > -0.5f && ball1->_direction.y < 0.5)
                     ball1->_direction.y = Helper::ClampOut(ball1->_direction.y, -0.5f, 0.5f);
 
+                // Also impose an X/horizontal direction limit, so that the game is not dead easy with the
+                // ball bouncing directly up and down.
+                // Again, Arkanoid appears to impose this limit.
+                   
+                // If the X direction is in the exclusive range -0.5 to 0.5, the ball is moving too slow on the X axis
+                // So, clamp the X direction outside of this range (inclusive)
+                if (ball1->_direction.x > -0.5f && ball1->_direction.x < 0.5)
+                    ball1->_direction.x = Helper::ClampOut(ball1->_direction.x, -0.5f, 0.5f);
 
 
                 //If the paddle is in "catch" mode, then attach the ball to the paddle if it hits the top
-                if (_paddle->_paddleState == Paddle::PaddleState::Catch && touchU)
+                if (_paddle->_paddleState == Paddle::PaddleState::Catch)
                 {
                     ball1->StickToPaddle(_paddle);
                 }
             }
-            else if (touchL || touchR)
-            {
-                ball1->_direction.x *= -1;
-            }
+            //For all other directions, just set the ball's respective axis in the respective opposite direction. The player won't be worrying
+            //about these nearly as much as the top of the paddle.
+            else if (touchD)
+                ball1->_direction.y = abs(ball1->_direction.y);     //Set ball's Y direction to point down
+            else if (touchL)
+                ball1->_direction.x = -abs(ball1->_direction.x);    //Set ball's X direction to point right
+            else if (touchR)
+                ball1->_direction.x = abs(ball1->_direction.x);     //Set ball's X directino to point left
         }
     }
 }

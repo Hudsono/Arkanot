@@ -18,8 +18,8 @@ public:
 	//Maximum speed of this object.
 	float _maxSpeed;
 
-	Image _image;			//Image data for the texture.
-	Texture2D _sprite;		//Sprite texture.
+	//Image _image;			//Image data for the texture.
+	Sprite _sprite;		//Sprite image and texture.
 	Vector2 _spriteOffset;	//Offset of the sprite relative to the object.
 	bool _centreSprite;		//Whether to automatically centre the sprite in the object.
 	float _angleDeg;		//Angle of the object, in degrees.
@@ -43,8 +43,8 @@ public:
 	//default constructor
 	//GameObject();
 
-	//Constructor with spawn position argument.
-	GameObject(Vector2 spawn);
+	//Constructor with spawn position argument and default texture file name as pink-black checkerboard image.
+	GameObject(Vector2 spawn, const char* textureFile = "none.png");
 
 	//Destructor
 	~GameObject();
@@ -52,8 +52,13 @@ public:
 	//RayLib update logic for this object.
 	virtual void Update(float timer);
 
-	//RayLib rendering graphics for this object.
+	//RayLib rendering graphics for this object. Accounts for offsets.
 	virtual void Render();
+
+	//Draw debugging graphics, if enabled.
+	//Seperate from Render so the debug logic need not be repeated elsewhere, and debug graphics can be redefined where needed.
+	//Base draws the hotspot only.
+	virtual void RenderDebug();
 
 
 	//Set the position of this object.

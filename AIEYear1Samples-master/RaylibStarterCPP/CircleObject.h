@@ -1,13 +1,19 @@
 #pragma once
 #include "GameObject.h"
+
+//Balls, bullets
+
 class CircleObject : public GameObject
 {
-public:
+protected:
     using GameObject::GameObject;
 
-    CircleObject(Vector2 spawn);
+    CircleObject(Vector2 spawn, const char* textureFile = "none.png");
     ~CircleObject();
 
-	float _size;
+    void RenderDebug(); //Add circle draw
+
+public:
+	float _radius;  //Radius of the circle object.
 };
 

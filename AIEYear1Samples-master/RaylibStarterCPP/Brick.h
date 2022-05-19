@@ -1,8 +1,8 @@
 #pragma once
-#include "GameObject.h"
-class Brick : public GameObject
+#include "RectObject.h"
+class Brick : public RectObject
 {
-    using GameObject::GameObject;
+    using RectObject::RectObject;
 
 public:
     Brick(Vector2 spawn, char inputType);

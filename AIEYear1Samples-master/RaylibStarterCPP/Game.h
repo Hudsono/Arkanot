@@ -79,6 +79,8 @@ public:
 
 	static bool _debugMode;	//showing debug graphics; boundaries; vectors; on screen displays; etc.
 
+	static bool _paused;	//Stop logic updates for the game.
+
 	void DoPhysics();	//Compute ball-ball, ball-paddle, ball-brick, ball-enemy, ball-powerup, etc physics
 	int PhysCircleRect(GameObject* rect, GameObject* circ);	//Return > 0 if the rectangle and circle interset, and where on the rectangle via 1-4; 0 = no collision.
 	void LoadLevel(int level);	//Load graphics of a level, its bricks, etc.

@@ -4,29 +4,42 @@
 std::vector<Ball*> Ball::_ballList;
 int Ball::_ballIDTotal;
 
-Ball::Ball(Vector2 spawn) : CircleObject(spawn)
+Ball::Ball(Vector2 spawn, Vector2 direction) : CircleObject(spawn, "ball.png")
 {
 	std::cout << "->\tNew Ball!" << std::endl;	//feedback
-	Ball::_ballList.push_back(this);	//add the ball to the ball list
+
+	cout << "Adding..." << endl;
+	cout << "Num bef = " << Ball::_ballList.size() << endl;
+	cout << "Num aft = " << Ball::_ballList.size() << endl;
 	Ball::_ballID = Ball::_ballIDTotal++;	//set this ball's ID to the current ball ID total, then add to the total so the next ball gets a unique ID
 
-	Ball::_direction = { 0, -1 };
+	Ball::_direction = direction;
 	Ball::_speed = 8;
 	Ball::_maxSpeed = 12;
 	Ball::_colour = Color {255, 255, 255, 255};
 
-	Ball::_size = 8;
-	Ball::_prevPos = spawn;
+	Ball::_velocity = 1;
+	Ball::_stuckOffset = 0;
 
-	Ball::_image = LoadImage("../resources/ball.png");
-	Ball::_sprite = LoadTextureFromImage(Ball::_image);
+	Ball::_radius = 8;
+	Ball::_prevPos = {NAN, NAN};
+
+	//Ball::_image = LoadImage("../resources/ball.png");
+	//Ball::_sprite = LoadTextureFromImage(Ball::_image);
 	Ball::_centreSprite = true;	//force the sprite to render offset to the centre of the object
 
 	Ball::_stuckPaddle = nullptr;
+
+
+	Ball::_ballList.push_back(this);	//add the ball to the ball list
 }
 
 Ball::~Ball()
 {
+	cout << "Attempting delete..." << endl;
+
+	cout << "Ball list size = " << Ball::_ballList.size() << endl;
+
 	//Delete pointers to unreserve their data, and set their address to nothing should they still be called after
 	delete _stuckPaddle;
 	_stuckPaddle = nullptr;
@@ -35,11 +48,18 @@ Ball::~Ball()
 	for (std::vector<Ball*>::iterator itBall = Ball::_ballList.begin(); itBall != Ball::_ballList.end(); ++itBall)
 	{
 		//if the iterator comes across a class instance whose _ballID is this one's, we found the exact instance we want to remove
-		if ((*itBall)->_ballID == this->_ballID)
+		if ((*itBall)->_ballID == _ballID)
 		{
 			Ball::_ballList.erase(itBall);	//remove this class instance from the list
-			break;	//break from loop, otherwise it will iterate into forbidden territory since we just resized the vector with the above command
+
+			cout << "Deleted ball #" << _ballID << endl;
+			cout << "Ball list size = " << Ball::_ballList.size() << endl;
+
+			PROBLEM BELOW
+			continue;	//break from loop, otherwise it will iterate into forbidden territory since we just resized the vector with the above command
 		}
+		cout << "DELETE FAILED FOR ID #" << _ballID << endl;
+		cout << "Ball list size = " << Ball::_ballList.size() << endl;
 	}
 }
 
@@ -71,6 +91,15 @@ void Ball::StickToPaddle(Paddle* paddle)
 
 	//Set the stuck offset
 	Ball::_stuckOffset = Ball::_pos.x - paddle->_pos.x;
+
+	//Set this ball's previous position to NAN so that they won't immediately collide with each-other when released--getting stuck
+	Ball::_prevPos = { NAN, NAN };
+}
+
+void Ball::Disrupt()
+{
+	//new Ball({_pos.x + rand(), _pos.y + rand()}, { _direction.x + ((rand() % 2) - 1), _direction.y + ((rand() % 2) - 1) });
+	new Ball({ _pos.x + 5, _pos.y + 10 }, { 0.5f, 0.5f });
 }
 
 void Ball::MoveBall(float deltaTime)
@@ -81,21 +110,21 @@ void Ball::MoveBall(float deltaTime)
 	//or, ball reaches bottom of boundary = delete the ball
 	//if this is the last ball, remove a life from the player and give them another ball
 	//if this is their last life, GameOver();
-	if (Ball::_pos.y + Ball::_size >= GetScreenHeight() || Ball::_pos.y + Ball::_size >= Ball::_boundaryPtr->y + Ball::_boundaryPtr->height)
+	if (Ball::_pos.y + Ball::_radius >= GetScreenHeight() || Ball::_pos.y + Ball::_radius >= Ball::_boundaryPtr->y + Ball::_boundaryPtr->height)
 	{
-		//cout << "DELETE" << endl;
+		cout << "DELETE" << endl;
 		Ball::~Ball();
 	}
 
 	//bounce ball off walls
 	//top/bottom of screen
-	if (Ball::_pos.y - Ball::_size <= 0 || Ball::_pos.y + Ball::_size >= GetScreenHeight())
+	if (Ball::_pos.y - Ball::_radius <= 0 || Ball::_pos.y + Ball::_radius >= GetScreenHeight())
 	{
 		Ball::_direction = { Ball::_direction.x, Ball::_direction.y * -1 };	//invert Y axis
 		Ball::_numCol++;
 	}
 	//left/right of screen
-	if (Ball::_pos.x - Ball::_size <= 0 || Ball::_pos.x + Ball::_size >= GetScreenWidth())
+	if (Ball::_pos.x - Ball::_radius <= 0 || Ball::_pos.x + Ball::_radius >= GetScreenWidth())
 	{
 		Ball::_direction = { Ball::_direction.x * -1, Ball::_direction.y };	//invert X axis
 		Ball::_numCol++;
@@ -105,13 +134,13 @@ void Ball::MoveBall(float deltaTime)
 
 	//bounce ball off boundary
 	//top/bottom of boundary
-	if (Ball::_pos.y - Ball::_size <= Ball::_boundaryPtr->y || Ball::_pos.y + Ball::_size >= Ball::_boundaryPtr->y + Ball::_boundaryPtr->height)
+	if (Ball::_pos.y - Ball::_radius <= Ball::_boundaryPtr->y || Ball::_pos.y + Ball::_radius >= Ball::_boundaryPtr->y + Ball::_boundaryPtr->height)
 	{
 		Ball::_direction = { Ball::_direction.x, Ball::_direction.y * -1 };	//invert Y axis
 		Ball::_numCol++;
 	}
 	//left/right of screen
-	if (Ball::_pos.x - Ball::_size <= Ball::_boundaryPtr->x || Ball::_pos.x + Ball::_size >= Ball::_boundaryPtr->x + Ball::_boundaryPtr->width)
+	if (Ball::_pos.x - Ball::_radius <= Ball::_boundaryPtr->x || Ball::_pos.x + Ball::_radius >= Ball::_boundaryPtr->x + Ball::_boundaryPtr->width)
 	{
 		Ball::_direction = { Ball::_direction.x * -1, Ball::_direction.y };	//invert X axis
 		Ball::_numCol++;

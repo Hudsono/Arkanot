@@ -8,7 +8,7 @@ class Ball : public CircleObject
 {
     using CircleObject::CircleObject;
 public:
-    Ball(Vector2 spawn);
+    Ball(Vector2 spawn, Vector2 direction);
     ~Ball();
 
     void Render();
@@ -26,5 +26,7 @@ public:
     Paddle* _stuckPaddle;   //paddle to be stuck to. If nullptr, this ball is not stuck to a pointer.
     void StickToPaddle(Paddle* paddle); //Stick this ball to a given paddle
     float _stuckOffset;     //the X position offset this ball was stuck to the paddle at
+
+    void Disrupt();     //Spawns 2 more balls on top of this ball--Disruption powerup
 };
 

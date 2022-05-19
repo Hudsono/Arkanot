@@ -5,10 +5,11 @@ std::vector<Brick*> Brick::_brickList;
 int Brick::_brickIDTotal;
 Color Brick::_colMap[10] = { GOLD, GRAY, RED, GREEN, YELLOW, ORANGE, WHITE, Color{0, 255, 255, 255}, BLUE, MAGENTA };
 
-Brick::Brick(Vector2 spawn, char inputType) : GameObject(spawn)
+Brick::Brick(Vector2 spawn, char inputType) : RectObject(spawn, "brick.png")
 {
-	Brick::_image = LoadImage("../resources/brick.png");
-	Brick::_sprite = LoadTextureFromImage(Brick::_image);
+	//Brick::_image = LoadImage("../resources/brick.png");
+	//Brick::_sprite = LoadTextureFromImage(Brick::_image);
+
 
 	std::cout << "->\tNew Brick!" << std::endl;	//feedback
 	Brick::_brickList.push_back(this);	//add the brick to the brick list
@@ -88,5 +89,5 @@ Color Brick::SetBrickType(char inputType)
 
 void Brick::Render()
 {
-	GameObject::Render();
+	RectObject::Render();
 }

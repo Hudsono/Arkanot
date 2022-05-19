@@ -1,11 +1,11 @@
 #pragma once
-#include "GameObject.h"
+#include "RectObject.h"
 
 class Ball; //forward declaration so we can reference the Ball class, because Ball.h already includes Paddle.h
 
-class Paddle : public GameObject
+class Paddle : public RectObject
 {
-    using GameObject::GameObject;
+    using RectObject::RectObject;
 
 public:
     Paddle(Vector2 spawn);

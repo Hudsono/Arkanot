@@ -1,10 +1,17 @@
 #include "CircleObject.h"
 
-CircleObject::CircleObject(Vector2 spawn) : GameObject(spawn)
+CircleObject::CircleObject(Vector2 spawn, const char* textureFile) : GameObject(spawn, textureFile)
 {
-	HERE haha broken (work on this!)
+
 }
 
 CircleObject::~CircleObject()
 {
+
+}
+
+void CircleObject::RenderDebug()
+{
+	DrawCircleLines(_pos.x, _pos.y, _radius, BLACK);
+	GameObject::RenderDebug();
 }

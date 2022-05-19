@@ -2,13 +2,12 @@
 #include "Ball.h"
 
 
-Paddle::Paddle(Vector2 spawn) : GameObject(spawn)
+Paddle::Paddle(Vector2 spawn) : RectObject(spawn, "paddle.png")
 {
 	Paddle::_speed = 15;
 
-	Paddle::_image = LoadImage("../resources/paddle.png");
-	Paddle::_sprite = LoadTextureFromImage(Paddle::_image);
-	Paddle::_scale = { 1, 1 };
+	//Paddle::_image = LoadImage("../resources/paddle.png");
+	//Paddle::_sprite = LoadTextureFromImage(Paddle::_image);
 	
 	Paddle::_paddleState = Paddle::PaddleState::Catch;
 }
@@ -26,7 +25,7 @@ void Paddle::Update(float deltaTime)
 		{
 			//Set ball position to paddle's + the ball's X offset + sit a little bit above the paddle
 			Ball* ball = (*itSBall);
-			ball->SetPos(Vector2{ Paddle::_pos.x + ball->_stuckOffset, Paddle::_pos.y - ball->_size });
+			ball->SetPos(Vector2{ Paddle::_pos.x + ball->_stuckOffset, Paddle::_pos.y - ball->_radius });
 		}
 	}
 
@@ -35,28 +34,28 @@ void Paddle::Update(float deltaTime)
 void Paddle::MoveLeft()
 {
     //Move left so long as the paddle isn't beyond the game boundary
-    if (Paddle::_pos.x >= GameObject::_boundaryPtr->x)
+    if (Paddle::_pos.x >= RectObject::_boundaryPtr->x)
     {
         Paddle::AddPos(Vector2{ -Paddle::_speed, 0 });
     }
     //If it went beyond the boundary, correct it
-    if (Paddle::_pos.x < GameObject::_boundaryPtr->x)
+    if (Paddle::_pos.x < RectObject::_boundaryPtr->x)
     {
-        Paddle::SetPos(Vector2{ GameObject::_boundaryPtr->x, Paddle::_pos.y });
+        Paddle::SetPos(Vector2{ RectObject::_boundaryPtr->x, Paddle::_pos.y });
     }
 }
 
 void Paddle::MoveRight()
 {
 	//Move right so long as the paddle isn't beyond the game boundary
-	if (Paddle::_pos.x + Paddle::Size().x <= GameObject::_boundaryPtr->x + GameObject::_boundaryPtr->width)
+	if (Paddle::_pos.x + Paddle::Size().x <= RectObject::_boundaryPtr->x + RectObject::_boundaryPtr->width)
 	{
 		Paddle::AddPos(Vector2{ Paddle::_speed, 0 });
 	}
 	//If it went beyond the boundary, correct it
-	if (Paddle::_pos.x + Paddle::Size().x > GameObject::_boundaryPtr->x + GameObject::_boundaryPtr->width)
+	if (Paddle::_pos.x + Paddle::Size().x > RectObject::_boundaryPtr->x + RectObject::_boundaryPtr->width)
 	{
-		Paddle::SetPos(Vector2{ GameObject::_boundaryPtr->x + GameObject::_boundaryPtr->width - Paddle::Size().x, Paddle::_pos.y });
+		Paddle::SetPos(Vector2{ RectObject::_boundaryPtr->x + RectObject::_boundaryPtr->width - Paddle::Size().x, Paddle::_pos.y });
 	}
 }
 
@@ -94,6 +93,6 @@ void Paddle::Fire()
 
 void Paddle::Render()
 {
-	GameObject::Render();
+	RectObject::Render();
 }
 

@@ -1,7 +1,21 @@
 #pragma once
 
 #include "raylib.h"
+#include <math.h>
+#include <vector>
+#include <algorithm>
+#include <map>
+#include <iostream>
 
+//Directory of all resource files to prepend given file names
+static std::string FILE_PATH = "../resources/";
+
+//Stores the RayLib Image data and its associated RayLib Texture.
+struct Sprite
+{
+	Image image;
+	Texture texture;
+};
 
 class Helper
 {
@@ -27,4 +41,17 @@ public:
 	//Clamps a given value outside of the given minimum value and given maximum value (inclusive).
 	//Returns min if min < input < (max+min)/2; returns max if (max+min)/2 < input < max; returns either max or min at random if input == (max+min)/2.
 	static float ClampOut(float input, float min, float max);
+
+	//Checks if either value of the input is NaN
+	//Returns true if either value is NaN; false if both are not NaN.
+	static bool isNaNVector(Vector2 input);
+
+	//Retains a list of all RayLib image file paths, so that an image will not be loaded twice. Used by LoadImageOp();
+	static std::map<const char*, Image*> _images;
+
+	//Maps a file name to a map of an image and its texture 
+	static std::map<std::string, Sprite> _sprites;
+
+	//Loads/sets both the image and texture to the given variables using resource-optimised methods, given the name of the file.
+	static void LoadSprite(std::string fileName, Sprite &sprite);
 };

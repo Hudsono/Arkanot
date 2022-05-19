@@ -1,5 +1,10 @@
 #include "Helper.h"
-#include <math.h>
+
+//Initialise static variables to keep the linker happy
+//std::map<const char*, Image*> Helper::_images;
+//std::map<Image*, Texture*> Helper::_textures;
+
+std::map<std::string, Sprite> Helper::_sprites;
 
 float Helper::Magnitude(Vector2 input)
 {
@@ -69,4 +74,34 @@ float Helper::ClampOut(float input, float min, float max)
         input = GetRandomValue(0, 1) ? max : min;
 
     return input;
+}
+
+bool Helper::isNaNVector(Vector2 input)
+{
+    return (isnan(input.x) || isnan(input.y));
+}
+
+void Helper::LoadSprite(std::string fileName, Sprite &sprite)
+{
+    std::string filePath = fileName.insert(0, FILE_PATH);
+
+    //Create an iterator to find a possible key match with the input file path
+    std::map<std::string, Sprite>::iterator itSprites = _sprites.find(filePath);
+
+    //If it found something i.e. didn't return a point after the last vector element, return the key's matching image
+    //Otherwise, return a new loaded image of the given file path
+    if (itSprites != _sprites.end())
+    {
+        std::cout << "*> File path exists (" << filePath << "). Setting referenced sprite with existing image and texture..." << std::endl;
+        sprite.image = (*itSprites).second.image;
+        sprite.texture = (*itSprites).second.texture;
+    }
+    else
+    {
+        std::cout << "*> File path does not yet exist (" << filePath << "). Initialising new image and texture for referenced sprite..." << std::endl;
+        sprite.image = LoadImage((filePath).c_str());
+        sprite.texture = LoadTextureFromImage(sprite.image);
+
+        _sprites.emplace(filePath, Sprite{ sprite.image, sprite.texture });;
+    }
 }
