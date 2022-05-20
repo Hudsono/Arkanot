@@ -7,10 +7,6 @@ int Ball::_ballIDTotal;
 Ball::Ball(Vector2 spawn, Vector2 direction) : CircleObject(spawn, "ball.png")
 {
 	std::cout << "->\tNew Ball!" << std::endl;	//feedback
-
-	cout << "Adding..." << endl;
-	cout << "Num bef = " << Ball::_ballList.size() << endl;
-	cout << "Num aft = " << Ball::_ballList.size() << endl;
 	Ball::_ballID = Ball::_ballIDTotal++;	//set this ball's ID to the current ball ID total, then add to the total so the next ball gets a unique ID
 
 	Ball::_direction = direction;
@@ -24,22 +20,15 @@ Ball::Ball(Vector2 spawn, Vector2 direction) : CircleObject(spawn, "ball.png")
 	Ball::_radius = 8;
 	Ball::_prevPos = {NAN, NAN};
 
-	//Ball::_image = LoadImage("../resources/ball.png");
-	//Ball::_sprite = LoadTextureFromImage(Ball::_image);
 	Ball::_centreSprite = true;	//force the sprite to render offset to the centre of the object
 
 	Ball::_stuckPaddle = nullptr;
-
 
 	Ball::_ballList.push_back(this);	//add the ball to the ball list
 }
 
 Ball::~Ball()
 {
-	cout << "Attempting delete..." << endl;
-
-	cout << "Ball list size = " << Ball::_ballList.size() << endl;
-
 	//Delete pointers to unreserve their data, and set their address to nothing should they still be called after
 	delete _stuckPaddle;
 	_stuckPaddle = nullptr;
@@ -51,15 +40,12 @@ Ball::~Ball()
 		if ((*itBall)->_ballID == _ballID)
 		{
 			Ball::_ballList.erase(itBall);	//remove this class instance from the list
-
+	
 			cout << "Deleted ball #" << _ballID << endl;
 			cout << "Ball list size = " << Ball::_ballList.size() << endl;
-
-			PROBLEM BELOW
-			continue;	//break from loop, otherwise it will iterate into forbidden territory since we just resized the vector with the above command
+	
+			break;	//break from loop, otherwise it will iterate into forbidden territory since we just resized the vector with the above command
 		}
-		cout << "DELETE FAILED FOR ID #" << _ballID << endl;
-		cout << "Ball list size = " << Ball::_ballList.size() << endl;
 	}
 }
 
@@ -83,6 +69,9 @@ void Ball::StickToPaddle(Paddle* paddle)
 	//Add this ball to the given paddle's list of balls stuck to it
 	paddle->_stuckBalls.push_back(this);
 
+	//Reset the paddle's stuck timer to its max value upon sticking
+	paddle->_stuckTimer = Paddle::_stuckTimerMax;
+
 	//Set ball to yellow to signify it's caught
 	Ball::_colour = Color{ 255, 255, 0, 255 };	
 
@@ -102,18 +91,49 @@ void Ball::Disrupt()
 	new Ball({ _pos.x + 5, _pos.y + 10 }, { 0.5f, 0.5f });
 }
 
+void Ball::BallRectColRes(RectObject* rectobj)
+{
+	//Get the collision result from the given rectobject
+	RectObject::RectColResult colResult = rectobj->RectCircleCollision(this);
+
+	//Act on the collision based on what side was hit, if any
+	switch (colResult)
+	{
+	case RectObject::RectColResult::Top:
+		this->_direction.y = -abs(this->_direction.y);    //Set ball's Y direction to point up
+		break;
+
+	case RectObject::RectColResult::Bottom:
+		this->_direction.y = abs(this->_direction.y);     //Set ball's Y direction to point down
+		break;
+
+	case RectObject::RectColResult::Left:
+		this->_direction.x = -abs(this->_direction.x);    //Set ball's X direction to point right
+		break;
+
+	case RectObject::RectColResult::Right:
+		this->_direction.x = abs(this->_direction.x);     //Set ball's X directino to point left
+		break;
+
+	default:
+		break;
+	}
+}
+
 void Ball::MoveBall(float deltaTime)
 {
 	Ball::AddPos({ _direction.x * _speed, _direction.y * _speed });
 
 	//ball reaches bottom of screen = delete the ball
 	//or, ball reaches bottom of boundary = delete the ball
+	//or, ball's position is not a number (an edge case issue in spawning balls from other balls en masse using the Disrupt function)
 	//if this is the last ball, remove a life from the player and give them another ball
 	//if this is their last life, GameOver();
-	if (Ball::_pos.y + Ball::_radius >= GetScreenHeight() || Ball::_pos.y + Ball::_radius >= Ball::_boundaryPtr->y + Ball::_boundaryPtr->height)
+	if (Ball::_pos.y + Ball::_radius >= GetScreenHeight() || Ball::_pos.y + Ball::_radius >= Ball::_boundaryPtr->y + Ball::_boundaryPtr->height || Helper::isNaNVector(Ball::_pos))
 	{
 		cout << "DELETE" << endl;
-		Ball::~Ball();
+		delete this;
+		//Ball::~Ball();
 	}
 
 	//bounce ball off walls

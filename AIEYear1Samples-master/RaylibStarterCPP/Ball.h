@@ -28,5 +28,7 @@ public:
     float _stuckOffset;     //the X position offset this ball was stuck to the paddle at
 
     void Disrupt();     //Spawns 2 more balls on top of this ball--Disruption powerup
+
+    void BallRectColRes(RectObject* rectobj);    //Generic ball collision for rectangular objects -- enemies and bricks
 };
 

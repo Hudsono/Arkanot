@@ -32,5 +32,14 @@ public:
     void MoveLeft();    //A key
     void MoveRight();   //D key
     void Fire();        //M1 or space. Multi-purpose--fires balls off the paddle, fires lasers, etc.
+
+    //Timer to limit how long balls may be stuck to the paddle for.
+    //Sticking resets the timer to _stuckTimerMax.
+    //Once timer reaches 0, Fire() is called automatically.
+    int _stuckTimer;    
+    static int _stuckTimerMax;
+
+    //Collision resolver with balls
+    void PaddleBallColRes(Ball* ball);
 };
 

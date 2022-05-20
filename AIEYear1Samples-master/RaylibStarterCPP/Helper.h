@@ -54,4 +54,17 @@ public:
 
 	//Loads/sets both the image and texture to the given variables using resource-optimised methods, given the name of the file.
 	static void LoadSprite(std::string fileName, Sprite &sprite);
+
+	//Simplifies brick collision resolution based on surrounding bricks in the level
+	//AKA if a brick has other bricks above, left, right and below, then don't bother checking any collision
+	//if a brick has another brick above, but no others surrounding it, don't bother checking top col
+	//etc
+
+	//NOTE: requires me to build or set some kind of Level object. Most probably a struct...
+	//Level structs can hold the 2D array of bricks which we'll need here
+	//Level structs can also define what kind of enemies spawn, the background, etc...
+	//Can stick level structs in an array for the game to progress through
+	//Level structs should also have functions to initialise (set up bricks, remove enemies, etc.)
+	RESUME FROM HERE!
+	static RectObject::RectColResult SimpleBrickCol(Level* level, Ball ball);
 };

@@ -78,11 +78,13 @@ float Helper::ClampOut(float input, float min, float max)
 
 bool Helper::isNaNVector(Vector2 input)
 {
-    return (isnan(input.x) || isnan(input.y));
+    //If either value of a Vector2 is NaN, return true.
+    return (isnan(input.x)) || (isnan(input.y));
 }
 
 void Helper::LoadSprite(std::string fileName, Sprite &sprite)
 {
+    //Prepend the base ../resources/ file path to the given file name
     std::string filePath = fileName.insert(0, FILE_PATH);
 
     //Create an iterator to find a possible key match with the input file path
@@ -92,16 +94,23 @@ void Helper::LoadSprite(std::string fileName, Sprite &sprite)
     //Otherwise, return a new loaded image of the given file path
     if (itSprites != _sprites.end())
     {
+        //Feedback to tell us it already found the file path's resources loaded in
         std::cout << "*> File path exists (" << filePath << "). Setting referenced sprite with existing image and texture..." << std::endl;
+        //Set the referenced sprite's image to the found key's value's image
         sprite.image = (*itSprites).second.image;
+        //Set the referenced sprite's texture to the found key's value's texture
         sprite.texture = (*itSprites).second.texture;
     }
     else
     {
+        //Feedback to tell us it didn't find the file path's loaded resources; thus, creates a new sprite object
         std::cout << "*> File path does not yet exist (" << filePath << "). Initialising new image and texture for referenced sprite..." << std::endl;
+        //LoadImage takes in a C-string, so convert the std::string file path and initialise the image data
         sprite.image = LoadImage((filePath).c_str());
+        //Initialise the texture from the image
         sprite.texture = LoadTextureFromImage(sprite.image);
 
+        //Insert the new sprite--constructed from the above loaded image and texture data--into the list of sprites for future searches.
         _sprites.emplace(filePath, Sprite{ sprite.image, sprite.texture });;
     }
 }

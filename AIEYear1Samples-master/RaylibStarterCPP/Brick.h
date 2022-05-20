@@ -1,5 +1,7 @@
 #pragma once
 #include "RectObject.h"
+#include "Ball.h"
+
 class Brick : public RectObject
 {
     using RectObject::RectObject;
@@ -33,6 +35,8 @@ public:
     static std::vector<Brick*> _brickList;
     static int _brickIDTotal;
     int _brickID;
+
+    void BrickBallColRes(Ball* ball);
 
 protected:
     static Color _colMap[];

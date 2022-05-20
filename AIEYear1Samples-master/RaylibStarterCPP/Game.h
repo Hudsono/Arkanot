@@ -81,8 +81,13 @@ public:
 
 	static bool _paused;	//Stop logic updates for the game.
 
-	void DoPhysics();	//Compute ball-ball, ball-paddle, ball-brick, ball-enemy, ball-powerup, etc physics
-	int PhysCircleRect(GameObject* rect, GameObject* circ);	//Return > 0 if the rectangle and circle interset, and where on the rectangle via 1-4; 0 = no collision.
+	void DoPhysics();			//Compute physics checks between entities using xyzPhysicsCheck() functions
+	void BallPhysicsCheck();	//Check each ball against each brick, each other ball, each enemy and each paddle.
+	void BulletPhysicsCheck();	//Check each bullet against each brick, each ball and each enemy
+	void EnemyPhysicsCheck();	//Check each enemy against each brick
+	void PaddlePhysicsCheck();	//Check each paddle against each power-up
+
+	//int PhysCircleRect(GameObject* rect, GameObject* circ);	//Return > 0 if the rectangle and circle interset, and where on the rectangle via 1-4; 0 = no collision.
 	void LoadLevel(int level);	//Load graphics of a level, its bricks, etc.
 
 	char _level[20][13];	//y,x or columns/rows of the current level

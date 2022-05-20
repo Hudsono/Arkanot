@@ -1,6 +1,7 @@
 #include "Paddle.h"
 #include "Ball.h"
 
+int Paddle::_stuckTimerMax = 200;
 
 Paddle::Paddle(Vector2 spawn) : RectObject(spawn, "paddle.png")
 {
@@ -10,6 +11,7 @@ Paddle::Paddle(Vector2 spawn) : RectObject(spawn, "paddle.png")
 	//Paddle::_sprite = LoadTextureFromImage(Paddle::_image);
 	
 	Paddle::_paddleState = Paddle::PaddleState::Catch;
+	Paddle::_stuckTimer = 0;
 }
 
 void Paddle::Update(float deltaTime)
@@ -27,6 +29,13 @@ void Paddle::Update(float deltaTime)
 			Ball* ball = (*itSBall);
 			ball->SetPos(Vector2{ Paddle::_pos.x + ball->_stuckOffset, Paddle::_pos.y - ball->_radius });
 		}
+
+		//Count down the stuck timer if it's above 0
+		//If 0, Fire all balls
+		if (Paddle::_stuckTimer > 0)
+			Paddle::_stuckTimer--;
+		else
+			Paddle::Fire();
 	}
 
 }
@@ -73,7 +82,7 @@ void Paddle::Fire()
 			//Fire each ball
 			Ball* ball = (*itSBall);
 			ball->SetPos(Vector2{ ball->_pos.x, ball->_pos.y - 10 });	//Lift the ball a tad up from the paddle so it doesn't intersect it immediately after firing
-			ball->_prevPos = ball->_pos;	//Set this ball's previous position to now.
+			//ball->_prevPos = ball->_pos;	//Set this ball's previous position to now.
 			
 			//Set direction to up
 			ball->_direction = { 0, -1 };
@@ -88,6 +97,92 @@ void Paddle::Fire()
 
 		//Clear the vector of balls since we fired all of them off. Don't need to target-and-remove them individually.
 		Paddle::_stuckBalls.clear();
+
+		//Reset the paddle's _stuckTimer
+		Paddle::_stuckTimer = 0;
+	}
+}
+
+void Paddle::PaddleBallColRes(Ball* ball)
+{
+	//Get the collision result between this paddle and the referenced ball object
+	RectObject::RectColResult colResult = RectCircleCollision(ball);
+
+	//Declare and initialise some variables to use in the switch
+	//How C++ combs through switches prevents variable initialisation within
+	bool rightHalf = false;
+	float sharpness = 0;
+
+	switch (colResult)
+	{
+	case RectObject::RectColResult::Top:
+        //If the ball touches the top of the paddle, execute some gameplay logic to keep the ball's direction predictable and controllable,
+        //but also varied.
+
+        //check if the ball landed on the right half of the paddle. For top collision.
+        //in Arkanoid, the ball is resolved differently depending on which half of the paddle the ball lands on
+        rightHalf = (ball->_pos.x > this->_pos.x + (this->Size().x / 2));
+
+        ball->_direction.y = -abs(ball->_direction.y);    //Set ball's Y direction to point up
+
+            //Reflection (below) proved difficult when colliders were inside each-other (i.e. it would reflect back-and-forth over and over)
+            //ball1->_direction.y *= -1;
+
+            //calculate how much X direction bias based on how close the ball is to the centre of the paddle
+        sharpness = -((this->_pos.x + (this->Size().x / 2)) - ball->_pos.x) / (this->Size().x / 2);
+
+        //if on the right, also reflect the X direction
+        if (rightHalf)
+            ball->_direction.x = sharpness;
+        else
+            ball->_direction.x += sharpness;
+
+        //normalise direction
+        // Actually, in Arkanoid, it doesn't look like the direction is normalised on purpose
+        // This way, the ball speeds up when hit on the paddle edges, and slows down when hitting the centre of the paddle
+        // AKA varied gameplay and controlled skill.
+        //Helper::Normalise(ball1->_direction);
+
+        // Make sure the ball's vertical direction doesn't become too shallow
+        // Otherwise, the ball can get stuck in the level without much player input
+        // Arkanoid also seems to impose this limit
+
+        // If the Y direction is in the exclusive range -0.5 to 0.5, the ball is moving too slow on the Y axis
+        // So, clamp the Y direction outside of this range (inclusive)
+        if (ball->_direction.y > -0.5f && ball->_direction.y < 0.5)
+            ball->_direction.y = Helper::ClampOut(ball->_direction.y, -0.5f, 0.5f);
+
+        // Also impose an X/horizontal direction limit, so that the game is not dead easy with the
+        // ball bouncing directly up and down.
+        // Again, Arkanoid appears to impose this limit.
+
+        // If the X direction is in the exclusive range -0.5 to 0.5, the ball is moving too slow on the X axis
+        // So, clamp the X direction outside of this range (inclusive)
+        if (ball->_direction.x > -0.5f && ball->_direction.x < 0.5)
+            ball->_direction.x = Helper::ClampOut(ball->_direction.x, -0.5f, 0.5f);
+
+
+        //If the paddle is in "catch" mode, then attach the ball to the paddle if it hits the top
+        if (this->_paddleState == Paddle::PaddleState::Catch)
+        {
+            ball->StickToPaddle(this);
+        }
+		break;
+
+	case RectObject::RectColResult::Bottom:
+		ball->_direction.y = abs(ball->_direction.y);     //Set ball's Y direction to point down
+		break;
+
+	case RectObject::RectColResult::Left:
+		ball->_direction.x = -abs(ball->_direction.x);    //Set ball's X direction to point right
+		break;
+
+	case RectObject::RectColResult::Right:
+		ball->_direction.x = abs(ball->_direction.x);     //Set ball's X directino to point left
+		break;
+
+	default:
+		break;
 	}
 }
 

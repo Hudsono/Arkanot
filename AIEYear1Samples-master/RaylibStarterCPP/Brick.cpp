@@ -87,6 +87,31 @@ Color Brick::SetBrickType(char inputType)
 	}
 }
 
+void Brick::BrickBallColRes(Ball* ball)
+{
+	//Get the collision result between this paddle and the referenced ball object
+	RectObject::RectColResult colResult = RectCircleCollision(ball);
+
+	switch (colResult)
+	{
+	case RectObject::RectColResult::Top:
+		ball->_direction.y = -abs(ball->_direction.y);     //Set ball's Y direction to point up
+		break;
+
+	case RectObject::RectColResult::Bottom:
+		ball->_direction.y = abs(ball->_direction.y);     //Set ball's Y direction to point down
+		break;
+
+	case RectObject::RectColResult::Left:
+		ball->_direction.x = -abs(ball->_direction.x);    //Set ball's X direction to point right
+		break;
+
+	case RectObject::RectColResult::Right:
+		ball->_direction.x = abs(ball->_direction.x);     //Set ball's X directino to point left
+		break;
+	}
+}
+
 void Brick::Render()
 {
 	RectObject::Render();

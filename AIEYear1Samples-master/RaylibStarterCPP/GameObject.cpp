@@ -30,8 +30,6 @@ GameObject::GameObject(Vector2 spawn, const char* textureFile)
 
 	_size = { (float)_sprite.image.width * _scale.x, (float)_sprite.image.height * _scale.y };
 
-
-
 	//feedback
 	cout << "New GameObject!" << endl;
 }
