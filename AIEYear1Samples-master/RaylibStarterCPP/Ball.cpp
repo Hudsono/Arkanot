@@ -39,10 +39,11 @@ Ball::~Ball()
 		//if the iterator comes across a class instance whose _ballID is this one's, we found the exact instance we want to remove
 		if ((*itBall)->_ballID == _ballID)
 		{
+			Ball::_ballList[itBall - Ball::_ballList.begin()] = nullptr;	//set the pointer in the list of this object to nullptr
 			Ball::_ballList.erase(itBall);	//remove this class instance from the list
 	
-			cout << "Deleted ball #" << _ballID << endl;
-			cout << "Ball list size = " << Ball::_ballList.size() << endl;
+			//cout << "Deleted ball #" << _ballID << endl;
+			//cout << "Ball list size = " << Ball::_ballList.size() << endl;
 	
 			break;	//break from loop, otherwise it will iterate into forbidden territory since we just resized the vector with the above command
 		}
@@ -88,7 +89,17 @@ void Ball::StickToPaddle(Paddle* paddle)
 void Ball::Disrupt()
 {
 	//new Ball({_pos.x + rand(), _pos.y + rand()}, { _direction.x + ((rand() % 2) - 1), _direction.y + ((rand() % 2) - 1) });
-	new Ball({ _pos.x + 5, _pos.y + 10 }, { 0.5f, 0.5f });
+
+	// Spawn X number of balls on disrupt. Currently, it spawns 2 more.
+	// The new balls' direction is slightly altered randomly for varied gameplay
+
+	// Both axes of the _direciton of the new ball is exclusively clamped in 2 ways: 
+	//  1. The added random value (so that it /must/ add some random value and not 0) and;
+	//	2. The resultant direction (so that it does not spawn going directly up/down or side/side).
+	for (int i = 0; i < 2; i++)
+	{
+	new Ball({ _pos.x, _pos.y }, { Helper::ClampOut(_direction.x + Helper::ClampOut((((rand() % 2) - 1) / 5), -0.1f, 0.1f), -0.5f, 0.5f), Helper::ClampOut(_direction.y + Helper::ClampOut((((rand() % 2) - 1) / 5), -0.1f, 0.1f), -0.5f, 0.5f)});
+	}
 }
 
 void Ball::BallRectColRes(RectObject* rectobj)
@@ -118,6 +129,15 @@ void Ball::BallRectColRes(RectObject* rectobj)
 	default:
 		break;
 	}
+
+	Brick* brickCheck = static_cast<Brick*>(rectobj);
+
+	//If there's a collision and the rectObj we collided with is a Brick, execute that brick's logic...
+	if (brickCheck != nullptr && colResult != RectObject::RectColResult::None)
+	{
+		brickCheck->ImpactBrick();
+		//cout << "THIS IS A BRICK!" << endl;
+	}
 }
 
 void Ball::MoveBall(float deltaTime)
@@ -131,18 +151,26 @@ void Ball::MoveBall(float deltaTime)
 	//if this is their last life, GameOver();
 	if (Ball::_pos.y + Ball::_radius >= GetScreenHeight() || Ball::_pos.y + Ball::_radius >= Ball::_boundaryPtr->y + Ball::_boundaryPtr->height || Helper::isNaNVector(Ball::_pos))
 	{
-		cout << "DELETE" << endl;
+		//cout << "DELETE" << endl;
 		delete this;
 		//Ball::~Ball();
 	}
 
 	//bounce ball off walls
-	//top/bottom of screen
-	if (Ball::_pos.y - Ball::_radius <= 0 || Ball::_pos.y + Ball::_radius >= GetScreenHeight())
+	//top of screen
+	if (Ball::_pos.y - Ball::_radius <= 0)
 	{
-		Ball::_direction = { Ball::_direction.x, Ball::_direction.y * -1 };	//invert Y axis
+		Ball::_direction = { Ball::_direction.x, -abs(Ball::_direction.y) };	//point Y axis down
 		Ball::_numCol++;
 	}
+
+	// Bottom of screen (just here for consistency--bottom of screen will actually remove the ball.
+	//if (Ball::_pos.y + Ball::_radius >= GetScreenHeight())
+	//{
+	//	Ball::_direction = { Ball::_direction.x, Ball::_direction.y * -1 };	//invert Y axis
+	//	Ball::_numCol++;
+	//}
+
 	//left/right of screen
 	if (Ball::_pos.x - Ball::_radius <= 0 || Ball::_pos.x + Ball::_radius >= GetScreenWidth())
 	{
@@ -152,17 +180,33 @@ void Ball::MoveBall(float deltaTime)
 		//Helper::Normalise(Ball::_direction);	//normalise the direction so the X and Y direction is always = 1 aka don't change its speed.
 	}
 
-	//bounce ball off boundary
-	//top/bottom of boundary
-	if (Ball::_pos.y - Ball::_radius <= Ball::_boundaryPtr->y || Ball::_pos.y + Ball::_radius >= Ball::_boundaryPtr->y + Ball::_boundaryPtr->height)
+	// Bounce ball off boundary
+	// Top of boundary
+	if (Ball::_pos.y - Ball::_radius <= Ball::_boundaryPtr->y)
 	{
-		Ball::_direction = { Ball::_direction.x, Ball::_direction.y * -1 };	//invert Y axis
+		Ball::_direction = { Ball::_direction.x, abs(Ball::_direction.y) };	// Point Y direction down
 		Ball::_numCol++;
 	}
-	//left/right of screen
-	if (Ball::_pos.x - Ball::_radius <= Ball::_boundaryPtr->x || Ball::_pos.x + Ball::_radius >= Ball::_boundaryPtr->x + Ball::_boundaryPtr->width)
+	// Bottom of boundary
+	// (Not actually needed--as that causes the ball to be deleted first)
+	//if (Ball::_pos.y + Ball::_radius >= Ball::_boundaryPtr->y + Ball::_boundaryPtr->height)
+	//{
+	//	Ball::_direction = { Ball::_direction.x, -abs(Ball::_direction.y) };	// Point Y direction up
+	//	Ball::_numCol++;
+	//}
+
+	// Left of boundary
+	if (Ball::_pos.x - Ball::_radius <= Ball::_boundaryPtr->x)
 	{
-		Ball::_direction = { Ball::_direction.x * -1, Ball::_direction.y };	//invert X axis
+		Ball::_direction = { abs(Ball::_direction.x), Ball::_direction.y };	// Point X direction right
+		Ball::_numCol++;
+		//Ball::_direction = { Ball::_direction.x * -1.1f, Ball::_direction.y };	//invert X axis --proof-of-concept, half the horizontal speed is lost here
+		//Helper::Normalise(Ball::_direction);	//normalise the direction so the X and Y direction is always = 1 aka don't change its speed.
+	}
+	// Right of boundary
+	if (Ball::_pos.x + Ball::_radius >= Ball::_boundaryPtr->x + Ball::_boundaryPtr->width)
+	{
+		Ball::_direction = { -abs(Ball::_direction.x), Ball::_direction.y};	// Point X direction left
 		Ball::_numCol++;
 		//Ball::_direction = { Ball::_direction.x * -1.1f, Ball::_direction.y };	//invert X axis --proof-of-concept, half the horizontal speed is lost here
 		//Helper::Normalise(Ball::_direction);	//normalise the direction so the X and Y direction is always = 1 aka don't change its speed.

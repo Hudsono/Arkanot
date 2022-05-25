@@ -12,6 +12,8 @@ Paddle::Paddle(Vector2 spawn) : RectObject(spawn, "paddle.png")
 	
 	Paddle::_paddleState = Paddle::PaddleState::Catch;
 	Paddle::_stuckTimer = 0;
+
+	Paddle::ResetPaddle();
 }
 
 void Paddle::Update(float deltaTime)
@@ -89,6 +91,9 @@ void Paddle::Fire()
 			//calculate how much X direction bias based on how close the ball is to the centre of the paddle
 			float sharpness = -((Paddle::_pos.x + (Paddle::Size().x / 2)) - ball->_pos.x) / (Paddle::Size().x / 2);
 
+			//Exclusively clamp the sharpness so that it doesn't always shoot out directly upwards/with little X movement. That's boring.
+			sharpness = Helper::ClampOut(sharpness, -0.3f, 0.3f);
+
 			//apply sharpness to direction
 			ball->_direction.x = sharpness;
 
@@ -130,6 +135,9 @@ void Paddle::PaddleBallColRes(Ball* ball)
 
             //calculate how much X direction bias based on how close the ball is to the centre of the paddle
         sharpness = -((this->_pos.x + (this->Size().x / 2)) - ball->_pos.x) / (this->Size().x / 2);
+
+		//Exclusively clamp the sharpness so that it doesn't always shoot out directly upwards/with little X movement. That's boring.
+		sharpness = Helper::ClampOut(sharpness, -0.3f, 0.3f);
 
         //if on the right, also reflect the X direction
         if (rightHalf)
@@ -184,6 +192,19 @@ void Paddle::PaddleBallColRes(Ball* ball)
 	default:
 		break;
 	}
+}
+
+void Paddle::ResetPaddle()
+{
+	//Reset the paddle's state.
+	this->_paddleState = Paddle::PaddleState::Normal;
+
+	//Set paddle position to middle of screen. Offsets by the width of the paddle.
+	SetPos({ (GetScreenWidth() / 2) - (this->Size().x / 2), _pos.y });
+
+	//Spawn a starting ball slightly off-centre on top of this paddle and stick it to this paddle.
+	Ball* temp = new Ball({ _pos.x + (Size().x / 1.8f), _pos.y}, {0.5, -0.5});
+	temp->StickToPaddle(this);
 }
 
 void Paddle::Render()

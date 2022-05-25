@@ -65,6 +65,6 @@ public:
 	//Level structs can also define what kind of enemies spawn, the background, etc...
 	//Can stick level structs in an array for the game to progress through
 	//Level structs should also have functions to initialise (set up bricks, remove enemies, etc.)
-	RESUME FROM HERE!
-	static RectObject::RectColResult SimpleBrickCol(Level* level, Ball ball);
+	
+	//static RectObject::RectColResult SimpleBrickCol(Level* level, Ball ball);
 };

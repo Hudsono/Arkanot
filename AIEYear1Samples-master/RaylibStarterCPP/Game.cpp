@@ -2,7 +2,7 @@
 
 using namespace std;
 
-//Declare static variables to keep the linker happy
+//Initialise static variables to keep the linker happy
 bool Game::_debugMode;
 Rectangle Game::_boundary;
 bool Game::_paused;
@@ -180,6 +180,12 @@ void Game::Update()
             Ball::_ballList[i]->Update(deltaTime);
         }
 
+        // Update all bricks for shininess
+        for (int i = 0; i < Brick::_brickList.size(); i++)
+        {
+            Brick::_brickList[i]->Update(deltaTime);
+        }
+
         //Calculate entity physics for the whole game.
         DoPhysics();
     }
@@ -205,6 +211,8 @@ void Game::Draw()
     string s = to_string(fps);
     char const* pchar = s.c_str();
     DrawText(pchar, screenMidX, screenMidY, 10, GREEN);
+
+    DrawText(to_string(_paddle->_score).c_str(), screenMidX, screenMidY, 20, BLACK);
 
     //cout << "FPS = " << fps << endl;
 
@@ -377,40 +385,6 @@ void Game::LoadLevel(int level)
         { '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0' }
     };
 
-    char level1[20][13] = {
-        { '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0' },
-        { '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0' },
-        { '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0' },
-        { '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0' },
-        { 's', 's', 's', 's', 's', 's', 's', 's', 's', 's', 's', 's', 's' },
-        { 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r' },
-        { 'y', 'y', 'y', 'y', 'y', 'y', 'y', 'y', 'y', 'y', 'y', 'y', 'y' },
-        { 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b' },
-        { 'm', 'm', 'm', 'm', 'm', 'm', 'm', 'm', 'm', 'm', 'm', 'm', 'm' },
-        { 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g', 'g' },
-        { '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0' },
-        { '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0' },
-        { '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0' },
-        { '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0' },
-        { '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0' },
-        { '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0' },
-        { '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0' },
-        { '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0' },
-        { '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0' },
-        { '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0' }
-    };
-
-    for (int i = 0; i < 20; i++)    //rows
-    {
-        for (int j = 0; j < 13; j++)     //columns
-        {
-            float offsetX = (float)j;
-            float offsetY = (float)i;
-            if (level1[i][j] != '0')
-                new Brick(Vector2{ offsetX, offsetY }, level1[i][j]);
-
-            cout << offsetX << ", " << offsetY << endl;
-        }
-    }
-
+    Level testLevel = Level("haha");
+    testLevel.InitLevel();
 }

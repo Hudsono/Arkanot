@@ -59,16 +59,16 @@ RectObject::RectColResult RectObject::RectCircleCollision(CircleObject* circle)
         {
             //if there's a bigger difference on the X axis, then choose to report X axis collision
             //Otherwise, if there's a bigger difference on the Y axis, then choose to report Y axis collision
-            if (abs(paddleBallDelta.x) > abs(paddleBallDelta.y))
-            {
-                touchU = false;
-                touchD = false;
-            }
-            else
-            {
+            //if (abs(paddleBallDelta.x) > abs(paddleBallDelta.y))
+            //{
+            //    touchU = false;
+            //    touchD = false;
+            //}
+            //else
+            //{
                 touchL = false;
                 touchR = false;
-            }
+            //}
         }
     }
 

@@ -37,8 +37,11 @@ public:
 	//Number of collisions against this object.
 	int _numCol;
 
-	//Colour tint of this object.
+	// Colour tint of this object.
 	Color _colour;
+
+	// Additive colour of this object.
+	Color _colourAdd;
 
 	//default constructor
 	//GameObject();
@@ -69,5 +72,8 @@ public:
 
 	//Points to the boundary rectangle of the game
 	static Rectangle* _boundaryPtr;
+
+	static int _gameObjIDTotal;
+	int _gameObjID;
 };
 

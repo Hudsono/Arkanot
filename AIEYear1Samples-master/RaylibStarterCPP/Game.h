@@ -41,6 +41,7 @@
 #include "Paddle.h"
 #include "Ball.h"
 #include "Brick.h"
+#include "Level.h"
 #include "Stopwatch.h"
 
 

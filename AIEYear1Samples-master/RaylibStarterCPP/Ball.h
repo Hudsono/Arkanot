@@ -3,6 +3,7 @@
 #include "Helper.h"
 #include <algorithm>
 #include "Paddle.h"
+#include "Brick.h"
 
 class Ball : public CircleObject
 {

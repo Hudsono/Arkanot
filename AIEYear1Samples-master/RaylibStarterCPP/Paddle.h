@@ -41,5 +41,11 @@ public:
 
     //Collision resolver with balls
     void PaddleBallColRes(Ball* ball);
+
+    //Score count for this particular paddle.
+    int _score;
+
+    //Resets the paddle's state, position and spawns a ball stuck to the paddle.
+    void ResetPaddle();
 };
 
