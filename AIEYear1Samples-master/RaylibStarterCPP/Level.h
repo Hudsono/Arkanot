@@ -17,8 +17,11 @@ public:
 	//Destructor
 	~Level();
 
-	//Loads interactive objects. Fills _levelBrickPtrs.
+	// Loads interactive objects. Fills _levelBrickPtrs.
 	void InitLevel();
+
+	// Destroys all bricks to make way for the next level.
+	void DeInitLevel();
 
 	//2D array of Brick types to be loaded in as Brick Pointers in _levelBrickPtrs
 	//Used during Level's initialisation.

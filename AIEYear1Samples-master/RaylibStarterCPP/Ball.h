@@ -24,6 +24,8 @@ public:
     Vector2 _prevPos;
     float _velocity;
 
+    static float _ballSpeedMod;    // Speed modification to all balls. Used in the Slow powerup.
+
     Paddle* _stuckPaddle;   //paddle to be stuck to. If nullptr, this ball is not stuck to a pointer.
     void StickToPaddle(Paddle* paddle); //Stick this ball to a given paddle
     float _stuckOffset;     //the X position offset this ball was stuck to the paddle at

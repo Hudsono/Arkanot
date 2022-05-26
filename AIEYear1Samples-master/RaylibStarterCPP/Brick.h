@@ -21,20 +21,20 @@ public:
 
     void Update(float deltaTime);
 
-    //Colours the brick can be and their respective health 
+    // Colours the brick can be and their respective point rewards when destroyed 
     enum class BrickTypes
     {
-        Gold = 1,   // Invincible; cannot be broken.
-        Silver,     // 2 hits to break initially--health increases by 1 every 8 stages. Points = 50 * stage number (regardless of multiples of 8)
-        Red,        // This and following colours break in 1 hit.
-        Green,
-        Yellow,
-        Orange,
-        White,
-        Cyan,
-        Blue,
-        Magenta,
-        Black       // There are no black bricks in the game, so this tells us that something went wrong in colour recognition/level loading.
+        Gold = 0,        // Invincible; cannot be broken.
+        Silver = 50,     // 2 hits to break initially--health increases by 1 every 8 stages. Points = 50 * stage number (regardless of multiples of 8)
+        White = 50,      // This and following colours break in 1 hit.
+        Orange = 60,
+        Cyan = 70,
+        Green = 80,
+        Red = 90,
+        Blue = 100,
+        Magenta = 110,
+        Yellow = 120,
+        Black = 0       // There are no black bricks in the game, so this tells us that something went wrong in colour recognition/level loading.
     };
 
     int _brickHealth;   //How many times the ball must hit the brick for it to be destroyed. -1 means invincible.
@@ -49,6 +49,8 @@ public:
     static int _brickIDTotal;
     int _brickID;
 
+    static int _numBricksToDestroy; // Counts how many bricks there are to destroy to win the level. Does not count Gold bricks as they cannot break.
+
     //Record what position in the entire level this brick is placed.
     Vector2 _levelPos;
 
@@ -59,15 +61,19 @@ public:
     //Impact effects, decrease health and/or break the brick.
     void ImpactBrick();
 
-    //Breaks the brick when its health is 0
+    // Breaks the brick when its health is 0
     void Break();
+
+    // Checks the number of non-gold bricks present.
+    // Returns True if that number is 0; false if otherwise.
+    static bool CheckBrickWin();
 
 
     void Shine();       // Quickly flashes the sprite white to show the player this brick is harder to destroy (Silver and Gold bricks)
     int _shineTime;     // How long to shine for...
 
 protected:
-    static Color _colMap[];
+    //static Color _colMap[];
     
     //Sets the brick's type given a letter. 
     //Most lowercase letters correspond to the first letter of its respective colour.

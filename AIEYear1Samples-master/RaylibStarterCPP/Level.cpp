@@ -47,7 +47,7 @@ Level::Level(std::string levelPath)
 
 
     // Load in brick types from the filePath
-    LoadLevelFile("../resources/levels/level6.txt");
+    LoadLevelFile(levelPath);
 
     //Loop through each row Y
     //for (int i = 0; i < COLUMNS; i++)
@@ -66,21 +66,33 @@ Level::~Level()
 
 void Level::InitLevel()
 {
-    //Construct the Level 2D array of Brick pointers
-    //Loop through each row Y
+    // Construct the Level 2D array of Brick pointers
+    // Loop through each row Y
     for (int i = 0; i < COLUMNS; i++)
     {
-        //For each row, loop through each of its columns X
+        // For each row, loop through each of its columns X
         for (int j = 0; j < ROWS; j++)
         {
-            //If this point in the level array isn't 0, it's a brick.
-            //Initialise one respective to its position in _levelBrickTypes and point to it.
+            // If this point in the level array isn't 0, it's a brick.
+            // Initialise one respective to its position in _levelBrickTypes and point to it.
             if (_levelBrickTypes[i][j] != '0' && _levelBrickTypes[i][j] != '-')
                 //_levelBrickPtrs[i][j] = new Brick(Vector2{ (float)i, (float)j }, _levelBrickTypes[i][j]);
                 new Brick(Vector2{ (float)i, (float)j }, _levelBrickTypes[i][j]);
 
             cout << j << ", " << i << endl;
         }
+    }
+}
+
+void Level::DeInitLevel()
+{
+    // Destroy each remaining brick present in the level.
+    // This is done by destroying the first member of the _brickList vector every time.
+    // Since it dynamically resizes, we can always know that if _brickList isn't empty, there's always an element in [0].
+    // An if-loop based on the size would not work given it resizes and often misses most of the bricks.
+    while (Brick::_brickList.size() > 0)
+    {
+        Brick::_brickList[0]->~Brick();
     }
 }
 

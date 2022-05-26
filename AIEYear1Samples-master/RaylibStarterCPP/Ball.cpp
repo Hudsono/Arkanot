@@ -3,6 +3,7 @@
 //Initialise static variables to keep the linker happy
 std::vector<Ball*> Ball::_ballList;
 int Ball::_ballIDTotal;
+float Ball::_ballSpeedMod;
 
 Ball::Ball(Vector2 spawn, Vector2 direction) : CircleObject(spawn, "ball.png")
 {
@@ -30,7 +31,8 @@ Ball::Ball(Vector2 spawn, Vector2 direction) : CircleObject(spawn, "ball.png")
 Ball::~Ball()
 {
 	//Delete pointers to unreserve their data, and set their address to nothing should they still be called after
-	delete _stuckPaddle;
+	//if (_stuckPaddle != nullptr)
+	//	delete _stuckPaddle;
 	_stuckPaddle = nullptr;
 
 	//Go through the _ballList vector using an iterator, from start to end
@@ -105,24 +107,24 @@ void Ball::Disrupt()
 void Ball::BallRectColRes(RectObject* rectobj)
 {
 	//Get the collision result from the given rectobject
-	RectObject::RectColResult colResult = rectobj->RectCircleCollision(this);
+	RectObject::RectColResults colResult = rectobj->RectCircleCollision(this);
 
 	//Act on the collision based on what side was hit, if any
 	switch (colResult)
 	{
-	case RectObject::RectColResult::Top:
+	case RectObject::RectColResults::Top:
 		this->_direction.y = -abs(this->_direction.y);    //Set ball's Y direction to point up
 		break;
 
-	case RectObject::RectColResult::Bottom:
+	case RectObject::RectColResults::Bottom:
 		this->_direction.y = abs(this->_direction.y);     //Set ball's Y direction to point down
 		break;
 
-	case RectObject::RectColResult::Left:
+	case RectObject::RectColResults::Left:
 		this->_direction.x = -abs(this->_direction.x);    //Set ball's X direction to point right
 		break;
 
-	case RectObject::RectColResult::Right:
+	case RectObject::RectColResults::Right:
 		this->_direction.x = abs(this->_direction.x);     //Set ball's X directino to point left
 		break;
 
@@ -133,7 +135,7 @@ void Ball::BallRectColRes(RectObject* rectobj)
 	Brick* brickCheck = static_cast<Brick*>(rectobj);
 
 	//If there's a collision and the rectObj we collided with is a Brick, execute that brick's logic...
-	if (brickCheck != nullptr && colResult != RectObject::RectColResult::None)
+	if (brickCheck != nullptr && colResult != RectObject::RectColResults::None)
 	{
 		brickCheck->ImpactBrick();
 		//cout << "THIS IS A BRICK!" << endl;
@@ -142,7 +144,8 @@ void Ball::BallRectColRes(RectObject* rectobj)
 
 void Ball::MoveBall(float deltaTime)
 {
-	Ball::AddPos({ _direction.x * _speed, _direction.y * _speed });
+	// Move in the ball's direction by the speed, affected by the ball speed modifier.
+	Ball::AddPos({ _direction.x * (_speed * Ball::_ballSpeedMod), _direction.y * (_speed * Ball::_ballSpeedMod)});
 
 	//ball reaches bottom of screen = delete the ball
 	//or, ball reaches bottom of boundary = delete the ball

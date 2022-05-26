@@ -1,12 +1,16 @@
 #include "Brick.h"
 #include "Game.h"
+#include "Powerup.h"
 
 //Initialise static variables to keep the linker happy
 std::vector<Brick*> Brick::_brickList;
 int Brick::_brickIDTotal;
-Color Brick::_colMap[10] = { GOLD, GRAY, RED, GREEN, YELLOW, ORANGE, WHITE, Color{0, 255, 255, 255}, BLUE, MAGENTA };
+int Brick::_numBricksToDestroy;
+//Color Brick::_colMap[10] = { GOLD, GRAY, RED, GREEN, YELLOW, ORANGE, WHITE, Color{0, 255, 255, 255}, BLUE, MAGENTA };
 
-Brick::Brick(Vector2 levelPos, char inputType) : RectObject(levelPos, "brick.png")
+// Constructor here has a condition based on the input type--if it's 's' or 'G' (Silver or Gold), then use brickM.png, otherwise use brick.png
+// I.e., metallic bricks that don't destroy in 1 hit appear different
+Brick::Brick(Vector2 levelPos, char inputType) : RectObject(levelPos, (inputType == 's' || inputType == 'G') ? "brickM.png" : "brick.png")
 {
 	//Brick::_image = LoadImage("../resources/brick.png");
 	//Brick::_sprite = LoadTextureFromImage(Brick::_image);
@@ -16,10 +20,15 @@ Brick::Brick(Vector2 levelPos, char inputType) : RectObject(levelPos, "brick.png
 	Brick::_brickList.push_back(this);	//add the brick to the brick list
 	Brick::_brickID = Brick::_brickIDTotal++;	//set this brick's ID to the current brick ID total, then add to the total so the next brick gets a unique ID
 
+
 	//Brick::_colour = Brick::_colMap[(int)Brick::_brickType];
 
 	Brick::_brickHealth = 1;	//default to 1 unless changed by SetBrickType
 	Brick::_colour = Brick::SetBrickType(inputType);
+
+	// If the brick we just added is NOT Gold, increment the number of bricks to destroy.
+	if (_brickType != BrickTypes::Gold)
+		Brick::_numBricksToDestroy++;
 
 	Brick::_scale = { 0.8f, 0.8f };
 
@@ -36,14 +45,16 @@ Brick::Brick(Vector2 levelPos, char inputType) : RectObject(levelPos, "brick.png
 
 Brick::~Brick()
 {
-	//Go through the _brickList vector using an iterator, from start to end
+	// Go through the _brickList vector using an iterator, from start to end
 	for (std::vector<Brick*>::iterator itBrick = Brick::_brickList.begin(); itBrick != Brick::_brickList.end(); ++itBrick)
 	{
-		//if the iterator comes across a class instance whose _brickID is this one's, we found the exact instance we want to remove
+		// If the iterator comes across a class instance whose _brickID is this one's, we found the exact instance we want to remove
 		if ((*itBrick)->_brickID == this->_brickID)
 		{
-			Brick::_brickList.erase(itBrick);	//remove this class instance from the list
-			break;	//break from loop, otherwise it will iterate into forbidden territory since we just resized the vector with the above command
+			if ((*itBrick)->_brickType != BrickTypes::Gold)
+				_numBricksToDestroy--;	// Decrement the number of bricks to destroy, if this is not Gold-coloured.
+			Brick::_brickList.erase(itBrick);	// Remove this class instance from the list
+			break;	// Break from loop, otherwise it will iterate into forbidden territory since we just resized the vector with the above command
 		}
 	}
 }
@@ -150,7 +161,7 @@ Color Brick::SetBrickType(char inputType)
 
 void Brick::ImpactBrick()
 {
-	cout << "Brick Impacted! ID = " << _brickID << endl;
+	//cout << "Brick Impacted! ID = " << _brickID << endl;
 	//cout << "Brick type = " << _brickType << endl;
 
 	// If 1 point of health taken from this brick is 0, break it.
@@ -171,21 +182,39 @@ void Brick::Shine()
 
 void Brick::Break()
 {
-	//remove this brick from the level map
-	//level map = 2D array of Brick pointers.
-	//Here, delete that pointer/set it to something that means "there's no brick here"
-	//std::cout << "BROKEN BRICK!" << endl;
-
-	//Remove this brick from the list and destroy it.
-	Brick::~Brick();
-
-	//Check if there are no more bricks...
-	//TODO: let the Game object handle this logic (so we can pause it and move on), and check if there are no /non-gold/ bricks present.
-	if (_brickList.size() == 0)
+	// First, we want to award the player points based on what brick they destroyed...
+	// If we destroyed a Silver brick, its score is multiplied by 50 for every 8th level.
+	if (Brick::_brickType == Brick::BrickTypes::Silver)
 	{
-		cout << "------------------------------------YOU WIN!!!-------------------------------------" << endl;
-		Game::_paused = true;
+		Game::_score += ((int)Brick::_brickType * (1 + (int)(Game::_levelNum / 8)));
 	}
+	else
+	{
+		Game::_score += (int)Brick::_brickType;
+		
+		// We also throw a random roll to spawn a power-up for non-Silver bricks--spawn these in the centre of the brick.
+		int randNum = rand() % 100;
+
+		// 20% chance of a power-up spawning.
+		if (randNum < 20)
+			new Powerup({ Brick::_pos.x + (Brick::Size().x / 2), Brick::_pos.y + (Brick::Size().y / 2)});
+	}
+
+	// Remove this brick from the list and destroy it.
+	Brick::~Brick();
+}
+
+bool Brick::CheckBrickWin()
+{
+	// Below method works, but the loop is more costly than just keeping track of the bricks as they're created and destroyed...
+	//int numBricksDestroy = 0;
+	//for (int i = 0; i < Brick::_brickList.size(); i++) if (Brick::_brickList[i]->_brickType != Brick::BrickTypes::Gold)
+	//{
+	//	numBricksDestroy++;
+	//}
+
+	// Returns True if there are no more destructible bricks present.
+	return Brick::_numBricksToDestroy == 0;
 }
 
 void Brick::Render()

@@ -1,5 +1,7 @@
 #include "Paddle.h"
 #include "Ball.h"
+#include "Powerup.h"
+#include "Game.h"
 
 int Paddle::_stuckTimerMax = 200;
 
@@ -72,46 +74,53 @@ void Paddle::MoveRight()
 
 void Paddle::Fire()
 {
-	//Fire any balls stuck to the paddle, no matter the paddle's state (could have changed state or start with a stuck ball for example)
+	// Fire any balls stuck to the paddle, no matter the paddle's state (could have changed state or start with a stuck ball for example)
 	if (!Paddle::_stuckBalls.empty())
 	{
 		//Ball::SetPos(Vector2{ Ball::_pos.x, Ball::_stuckPaddle->_pos.y });
 
-		//Go through the _stuckBalls vector using an iterator, from start to end
-		//Move all balls
+		// Go through the _stuckBalls vector using an iterator, from start to end
+		// Move all balls
 		for (vector<Ball*>::iterator itSBall = Paddle::_stuckBalls.begin(); itSBall != Paddle::_stuckBalls.end(); ++itSBall)
 		{
-			//Fire each ball
+			// Fire each ball
 			Ball* ball = (*itSBall);
-			ball->SetPos(Vector2{ ball->_pos.x, ball->_pos.y - 10 });	//Lift the ball a tad up from the paddle so it doesn't intersect it immediately after firing
+			ball->SetPos(Vector2{ ball->_pos.x, ball->_pos.y - 10 });	// Lift the ball a tad up from the paddle so it doesn't intersect it immediately after firing
 			//ball->_prevPos = ball->_pos;	//Set this ball's previous position to now.
 			
-			//Set direction to up
+			// Set direction to up
 			ball->_direction = { 0, -1 };
-			//calculate how much X direction bias based on how close the ball is to the centre of the paddle
+			// Calculate how much X direction bias based on how close the ball is to the centre of the paddle
 			float sharpness = -((Paddle::_pos.x + (Paddle::Size().x / 2)) - ball->_pos.x) / (Paddle::Size().x / 2);
 
-			//Exclusively clamp the sharpness so that it doesn't always shoot out directly upwards/with little X movement. That's boring.
+			// Exclusively clamp the sharpness so that it doesn't always shoot out directly upwards/with little X movement. That's boring.
 			sharpness = Helper::ClampOut(sharpness, -0.3f, 0.3f);
 
-			//apply sharpness to direction
+			// Apply sharpness to direction
 			ball->_direction.x = sharpness;
 
-			ball->_stuckPaddle = nullptr;	//Set this ball to not be stuck to any paddle anymore
+			ball->_stuckPaddle = nullptr;	// Set this ball to not be stuck to any paddle anymore
 		}
 
-		//Clear the vector of balls since we fired all of them off. Don't need to target-and-remove them individually.
+		// Clear the vector of balls since we fired all of them off. Don't need to target-and-remove them individually.
 		Paddle::_stuckBalls.clear();
 
-		//Reset the paddle's _stuckTimer
+		// Reset the paddle's _stuckTimer
 		Paddle::_stuckTimer = 0;
+	}
+
+	// If our paddle has a "Laser" power-up, Fire() will fire 2 lasers upwards.
+	if (Paddle::_paddleState == Paddle::PaddleState::Laser)
+	{
+		new Bullet(Paddle::_pos);
+		new Bullet({ Paddle::_pos.x + Paddle::Size().x, Paddle::_pos.y });
 	}
 }
 
 void Paddle::PaddleBallColRes(Ball* ball)
 {
 	//Get the collision result between this paddle and the referenced ball object
-	RectObject::RectColResult colResult = RectCircleCollision(ball);
+	RectObject::RectColResults colResult = RectCircleCollision(ball);
 
 	//Declare and initialise some variables to use in the switch
 	//How C++ combs through switches prevents variable initialisation within
@@ -120,7 +129,7 @@ void Paddle::PaddleBallColRes(Ball* ball)
 
 	switch (colResult)
 	{
-	case RectObject::RectColResult::Top:
+	case RectObject::RectColResults::Top:
         //If the ball touches the top of the paddle, execute some gameplay logic to keep the ball's direction predictable and controllable,
         //but also varied.
 
@@ -177,20 +186,75 @@ void Paddle::PaddleBallColRes(Ball* ball)
         }
 		break;
 
-	case RectObject::RectColResult::Bottom:
+	case RectObject::RectColResults::Bottom:
 		ball->_direction.y = abs(ball->_direction.y);     //Set ball's Y direction to point down
 		break;
 
-	case RectObject::RectColResult::Left:
+	case RectObject::RectColResults::Left:
 		ball->_direction.x = -abs(ball->_direction.x);    //Set ball's X direction to point right
 		break;
 
-	case RectObject::RectColResult::Right:
+	case RectObject::RectColResults::Right:
 		ball->_direction.x = abs(ball->_direction.x);     //Set ball's X directino to point left
 		break;
 
 	default:
 		break;
+	}
+}
+
+void Paddle::PaddlePowerupCol(Powerup* powerup)
+{
+	// If this paddle indeed collided with the given powerup, destroy the powerup and grant its power.
+	if (Paddle::RectRectCollision(powerup))
+	{
+		powerup->~Powerup();	// Destroy powerup
+		Game::_score += 1000;	// Grant score for picking up the powerup
+
+		// Decide what to do based on the powerup's type
+		switch (powerup->_powerupType)
+		{
+		case Powerup::PowerupTypes::Laser:
+			Paddle::_paddleState = PaddleState::Laser;
+			break;
+
+		case Powerup::PowerupTypes::Enlarge:
+			Paddle::_paddleState = PaddleState::Enlarge;
+			break;
+
+		case Powerup::PowerupTypes::Catch:
+			Paddle::_paddleState = PaddleState::Catch;
+			break;
+
+		case Powerup::PowerupTypes::Slow:
+			Paddle::_gamePtr->SlowPowerup();
+			break;
+
+		case Powerup::PowerupTypes::Break:
+			// TODO: call to the Game class instance to open the door for the paddle to scape through...
+			// For now, add the score that would be added should the paddle pass through that door.
+			Game::_score += 10000;
+			break;
+
+		case Powerup::PowerupTypes::Disruption:
+			Paddle::DisruptAllBalls();	// Call disruption on all balls in the level
+			break;
+
+		case Powerup::PowerupTypes::Life:
+			Game::_lives++;
+			break;
+		}
+	}
+}
+
+void Paddle::DisruptAllBalls()
+{
+	// Have to save the vector size beforehand otherwise the size changes every time a new ball is added; infinite loop
+	int savedSize = Ball::_ballList.size();
+
+	for (int i = 0; i < savedSize; i++)
+	{
+		Ball::_ballList[i]->Disrupt();
 	}
 }
 

@@ -1,7 +1,9 @@
 #pragma once
 #include "RectObject.h"
+#include "Bullet.h"
 
-class Ball; //forward declaration so we can reference the Ball class, because Ball.h already includes Paddle.h
+class Ball; // Forward declaration so we can reference the Ball class, because Ball.h already includes Paddle.h
+class Powerup;  // Ditto, but just for convenience
 
 class Paddle : public RectObject
 {
@@ -12,40 +14,46 @@ public:
     void Render();
     void Update(float deltaTime);
 
-    //States the paddle /can be/ in
+    // States the paddle /can be/ in
     enum class PaddleState
     {
-        Normal,     //Normal operation
-        Dead,       //Lost all lives--inoperable. Not necessarily removed from the game.
-        Laser,      //Laser power-up
-        Enlarge,    //Larger paddle power-up
-        Catch       //Balls stick to paddle power-up
+        Normal,     // Normal operation
+        Dead,       // Lost all lives--inoperable. Not necessarily removed from the game.
+        Laser,      // Laser power-up
+        Enlarge,    // Larger paddle power-up
+        Catch       // Balls stick to paddle power-up
     };
 
-    //State the paddle /is/ in
+    // State the paddle /is/ in
     PaddleState _paddleState;
 
-    //List of balls which have been stuck to this paddle
+    // List of balls which have been stuck to this paddle
     vector<Ball*> _stuckBalls;
 
-    //Controls for the paddle
-    void MoveLeft();    //A key
-    void MoveRight();   //D key
-    void Fire();        //M1 or space. Multi-purpose--fires balls off the paddle, fires lasers, etc.
+    // Controls for the paddle
+    void MoveLeft();    // A key
+    void MoveRight();   // D key
+    void Fire();        // M1 or space. Multi-purpose--fires balls off the paddle, fires lasers, etc.
 
-    //Timer to limit how long balls may be stuck to the paddle for.
-    //Sticking resets the timer to _stuckTimerMax.
-    //Once timer reaches 0, Fire() is called automatically.
+    // Timer to limit how long balls may be stuck to the paddle for.
+    // Sticking resets the timer to _stuckTimerMax.
+    // Once timer reaches 0, Fire() is called automatically.
     int _stuckTimer;    
     static int _stuckTimerMax;
 
-    //Collision resolver with balls
+    // Collision resolver with balls
     void PaddleBallColRes(Ball* ball);
 
-    //Score count for this particular paddle.
-    int _score;
+    // Score count for this particular paddle.
+    //int _score;
 
-    //Resets the paddle's state, position and spawns a ball stuck to the paddle.
+    // Resets the paddle's state, position and spawns a ball stuck to the paddle.
     void ResetPaddle();
+
+    // Checks for collisions between this paddle and the given powerup
+    void PaddlePowerupCol(Powerup* powerup);
+
+    // Checks all balls in the level, calls Disrupt() on them
+    void DisruptAllBalls();
 };
 

@@ -6,6 +6,7 @@ using namespace std;
 // Initialise static variables to keep the linker happy
 int GameObject::_gameObjIDTotal;
 Rectangle* GameObject::_boundaryPtr;
+Game* GameObject::_gamePtr;
 
 GameObject::GameObject(Vector2 spawn, const char* textureFile)
 {
