@@ -7,15 +7,15 @@ class Brick : public RectObject
     using RectObject::RectObject;
 
 public:
-    //Constructor.
-    //Needs to know its 2D position in the level array, which will determine its position.
-    //inputType = colour of the brick to initialise, determining other properties of this brick.
+    // Constructor.
+    // Needs to know its 2D position in the level array, which will determine its position.
+    // inputType = colour of the brick to initialise, determining other properties of this brick.
     Brick(Vector2 levelPos, char inputType);
 
-    //Destructor
+    // Destructor
     ~Brick();
 
-    //Renders the brick graphic
+    // Renders the brick graphic
     void Render();
 
 
@@ -39,30 +39,22 @@ public:
 
     int _brickHealth;   //How many times the ball must hit the brick for it to be destroyed. -1 means invincible.
 
-    //The colour type of this brick
-    BrickTypes _brickType;
+    BrickTypes _brickType;    // The colour type of this brick
 
-    //List of pointers to all Brick objects
-    static std::vector<Brick*> _brickList;
+    static std::vector<Brick*> _brickList;    // List of pointers to all Brick objects
 
-    //
     static int _brickIDTotal;
     int _brickID;
 
     static int _numBricksToDestroy; // Counts how many bricks there are to destroy to win the level. Does not count Gold bricks as they cannot break.
 
-    //Record what position in the entire level this brick is placed.
-    Vector2 _levelPos;
+    Vector2 _levelPos;    // Record what position in the entire level this brick is placed.
 
-    //Influence the collided ball's physics and check brick health --NOT USED
-    //void BrickBallColRes(Ball* ball);
-
-    //React to a bullet or ball impacting this brick.
-    //Impact effects, decrease health and/or break the brick.
+    // React to a bullet or ball impacting this brick.
+    // Impact effects, decrease health and/or break the brick.
     void ImpactBrick();
 
-    // Breaks the brick when its health is 0
-    void Break();
+    void Break();       // Breaks the brick when its health is 0
 
     // Checks the number of non-gold bricks present.
     // Returns True if that number is 0; false if otherwise.
@@ -73,11 +65,9 @@ public:
     int _shineTime;     // How long to shine for...
 
 protected:
-    //static Color _colMap[];
-    
-    //Sets the brick's type given a letter. 
-    //Most lowercase letters correspond to the first letter of its respective colour.
-    //Gold and Green share the same first letter; thus, 'g' = Green and 'G' = Gold.
+    // Sets the brick's type given a letter. 
+    // Most lowercase letters correspond to the first letter of its respective colour.
+    // Gold and Green share the same first letter; thus, 'g' = Green and 'G' = Gold.
     Color SetBrickType(char inType);
 };
 
