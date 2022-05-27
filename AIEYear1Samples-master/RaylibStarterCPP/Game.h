@@ -28,7 +28,10 @@
 #define RAYGUI_SUPPORT_ICONS
 
 #define SCREEN_WIDTH	1280
-#define SCREEN_HEIGHT	720
+#define SCREEN_HEIGHT	800
+
+#define DELAY_LEVELSTART 100
+#define SHADOW { 0, 0, 0, 150 }
 
 
 //#include "raygui.h"
@@ -58,7 +61,8 @@ public:
 
 	// Basic recipe for a real-time game
 
-	// Initialises the game object.
+	// Initialises the object using variables and methods that first require the RayLib window to initialise.
+	// Also initialises the RayLib window.
 	void Init();
 
 	// Updates the game object's logic.
@@ -102,6 +106,7 @@ public:
 
 	void WinGame();		// Win the current game; advance to the next level if available.
 	void LoseLife();	// Paddle is destroyed and the player loses a life; if there are no more lives, GameOver(), otherwise the paddle respawns back in the current level.
+	void CheckLife();	// Seperate logic for checking if the player can continue or if their game is over. Seperated so the timer can set a delay between the paddle being destroyed and any acutal level logic.
 	void GameOver();	// Game returns to the main menu and all progress is lost.
 	
 	void ClearEntities();	// Deletes all non-brick entities. Used when a life is lost; the destroyed bricks remain in the level.
@@ -111,6 +116,21 @@ public:
 
 	void SlowPowerup();	// Sets the Ball class' timer for its ball speed modifier. Used by the Slow powerup.
 	int _slowTimer;		// Timer to count down for ball speed modifier. Reaching 0 sets the ball speed back to 1x.
+
+	Sprite _backgroundSprite;	// Background image of the game--changes per level
+	Color _bgColour;	// Colour of the background.
+	void SetBG(int bg);	// Sets the background given a number 1-4.
+	static Vector2 _shadowOffset;	// How far to offset shadows on GameObjects and the boundary, etc.
+
+	int _levelTimer;	// Timer that starts counting as soon as the level is loaded. Controls enemy spawning and metallic bricks flashing at the start.
+	bool _freeze;		// Freeze the player's controls. Only pauses the player's movements, not the whole game.
+
+	bool _mouseCtrl;	// Dictates whether the paddle is controlled by the mouse, or by the keyboard.
+
+	// Timers used to record a time offset for the player dying, the level changing or the level initialising. Starts at -1 so it doesn't do anything on its own.
+	//int _delayTimeStart;	// Level start delay
+	int _delayTimeWin;		// Level win delay
+	int _delayTimeDie;		// Paddle die delay
 
 
 protected:

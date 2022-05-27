@@ -60,6 +60,9 @@ public:
 	// RayLib rendering graphics for this object. Accounts for offsets.
 	virtual void Render();
 
+	// Ditto, but for shadows. Seperate function so it's rendered beneath the objects.
+	virtual void RenderShadow();
+
 	// Draw debugging graphics, if enabled.
 	// Seperate from Render so the debug logic need not be repeated elsewhere, and debug graphics can be redefined where needed.
 	// Base draws the hotspot only.

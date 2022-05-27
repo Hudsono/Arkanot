@@ -42,6 +42,17 @@ void Paddle::Update(float deltaTime)
 			Paddle::Fire();
 	}
 
+	// Slowly animate the paddle widening or thinnin for the Enlarge power-up
+	if (Paddle::_paddleState == Paddle::PaddleState::Enlarge && Paddle::_scale.x < 2)
+	{
+		Paddle::_scale.x += 0.1f;		// Add a bit of scale each check until we're at 2x X scale
+		Paddle::AddPos({ -5, 0 });		// Also move the paddle slightly each time we scale so that the paddle is scaled outwards from the centre. Also offsets any stuck balls relative to the scale.
+	}
+	else if (Paddle::_paddleState != Paddle::PaddleState::Enlarge && Paddle::_scale.x > 1)
+	{
+		Paddle::_scale.x -= 0.1f;		// Like above, but removing a bit of scale until we're at 1x X scale.
+		Paddle::AddPos({ 5, 0 });		// Like above, but for scaling inwards
+	}
 }
 
 void Paddle::MoveLeft()
@@ -260,8 +271,11 @@ void Paddle::DisruptAllBalls()
 
 void Paddle::ResetPaddle()
 {
-	//Reset the paddle's state.
+	// Reset the paddle's state.
 	this->_paddleState = Paddle::PaddleState::Normal;
+
+	// Reset its sacle
+	this->_scale = { 1, 1 };
 
 	//Set paddle position to middle of screen. Offsets by the width of the paddle.
 	SetPos({ (GetScreenWidth() / 2) - (this->Size().x / 2), _pos.y });

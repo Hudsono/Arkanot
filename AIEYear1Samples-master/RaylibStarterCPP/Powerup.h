@@ -31,5 +31,7 @@ public:
 
     // The current type this power-up is
     PowerupTypes _powerupType;
+
+    void EnlargePaddle();   // Sets the paddle state to Enlarge and plays an animation
 };
 

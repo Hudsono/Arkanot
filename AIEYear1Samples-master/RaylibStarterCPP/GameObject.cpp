@@ -78,6 +78,30 @@ void GameObject::Render()
 
 	// Render the texture at the game object's position, offset by any sprite offset specified.
 	//DrawTextureEx(GameObject::_sprite, Vector2 { GameObject::_pos.x + GameObject::_spriteOffset.x, GameObject::_pos.y + GameObject::_spriteOffset.y }, GameObject::_angleDeg, 1, GameObject::_colour);
+
+	// Render a light shadow of the same shape...
+	//DrawTexturePro
+	//(
+	//	GameObject::_sprite.texture,
+	//	Rectangle
+	//	{
+	//		0,
+	//		0,
+	//		(float)GameObject::_sprite.image.width,
+	//		(float)GameObject::_sprite.image.height
+	//	},
+	//	Rectangle
+	//	{
+	//		GameObject::_pos.x + Game::_shadowOffset.x,		// Offset this draw call a bit to simulate a back shadow
+	//		GameObject::_pos.y + Game::_shadowOffset.y,
+	//		GameObject::_sprite.image.width * GameObject::_scale.x,
+	//		GameObject::_sprite.image.height * GameObject::_scale.y
+	//	},
+	//	Vector2{ -GameObject::_spriteOffset.x, -GameObject::_spriteOffset.y },
+	//	GameObject::_angleDeg,
+	//	SHADOW	// Black, translucent colour to simulate a back shadow.
+	//);
+
 	DrawTexturePro
 	(
 		GameObject::_sprite.texture, 
@@ -104,6 +128,32 @@ void GameObject::Render()
 	if (Game::_debugMode)
 		RenderDebug();
 
+}
+
+void GameObject::RenderShadow()
+{
+	// Render a light shadow of the same shape...
+	DrawTexturePro
+	(
+		GameObject::_sprite.texture,
+		Rectangle
+		{
+			0,
+			0,
+			(float)GameObject::_sprite.image.width,
+			(float)GameObject::_sprite.image.height
+		},
+		Rectangle
+		{
+			GameObject::_pos.x + Game::_shadowOffset.x,		// Offset this draw call a bit to simulate a back shadow
+			GameObject::_pos.y + Game::_shadowOffset.y,
+			GameObject::_sprite.image.width * GameObject::_scale.x,
+			GameObject::_sprite.image.height * GameObject::_scale.y
+		},
+		Vector2{ -GameObject::_spriteOffset.x, -GameObject::_spriteOffset.y },
+		GameObject::_angleDeg,
+		SHADOW	// Black, translucent colour to simulate a back shadow.
+	);
 }
 
 void GameObject::RenderDebug()
